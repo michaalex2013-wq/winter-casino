@@ -2,327 +2,157 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Winter Casino</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
-body { background: #0a0a0f; color: #e0e0e0; min-height: 100vh; padding-bottom: 80px; }
+body { background: #0a0a0a; color: #fff; min-height: 100vh; padding-bottom: 80px; }
 
-/* ВЕРХНЯЯ ПАНЕЛЬ */
+/* ТОП */
 .topbar {
-    background: linear-gradient(135deg, #1a0000 0%, #0a0a0f 100%);
-    padding: 14px 16px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 2px solid #ff0033;
-    box-shadow: 0 4px 25px rgba(255,0,51,0.4);
+    background: linear-gradient(180deg, #1a1a1a, #0d0d0d);
+    padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 2px solid #ffd700;
     position: sticky; top: 0; z-index: 100;
 }
-.topbar .logo { font-size: 22px; font-weight: 900; color: #ffd700; letter-spacing: 4px; text-shadow: 0 0 20px rgba(255,215,0,0.8); }
-.topbar .user-mini {
-    display: flex; align-items: center; gap: 8px;
-    background: linear-gradient(135deg, #1a0a0a, #0a0a0f);
-    padding: 6px 14px; border-radius: 25px;
-    border: 1px solid #ff0033;
-    font-size: 13px; font-weight: bold;
-}
-.topbar .user-mini .dot { width: 8px; height: 8px; border-radius: 50%; background: #00ff88; box-shadow: 0 0 8px #00ff88; }
+.topbar .logo { font-size: 22px; font-weight: 900; color: #ffd700; letter-spacing: 2px; }
+.topbar .bonus-badge { background: linear-gradient(135deg, #ffd700, #ff9900); color: #111; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 900; }
+.hidden { display: none !important; }
 
-.page { padding: 16px; }
-.hidden { display: none; }
-
-/* АВТОРИЗАЦИЯ */
-.auth-bg {
-    min-height: 100vh;
-    background: radial-gradient(circle at top, #2a0000 0%, #0a0a0f 60%);
-    display: flex; align-items: center; justify-content: center;
-    padding: 20px;
+/* БАННЕР */
+.banner {
+    margin: 16px; border-radius: 20px; overflow: hidden; position: relative;
+    background: linear-gradient(135deg, #1a0033 0%, #330066 50%, #1a0033 100%);
+    padding: 28px 22px; text-align: center;
+    border: 2px solid #ffd700;
+    box-shadow: 0 0 30px rgba(255,215,0,0.3);
 }
-.auth-box {
-    background: linear-gradient(135deg, #14141f 0%, #0a0a0f 100%);
-    border: 2px solid #ff0033;
-    border-radius: 24px;
-    padding: 36px 26px;
-    width: 100%; max-width: 420px;
-    box-shadow: 0 0 60px rgba(255,0,51,0.5), inset 0 0 30px rgba(255,0,51,0.05);
+.banner h2 { font-size: 22px; font-weight: 900; color: #ffd700; margin-bottom: 8px; text-shadow: 0 2px 10px rgba(0,0,0,0.7); }
+.banner p { font-size: 13px; color: #ccc; margin-bottom: 16px; }
+.banner button {
+    background: linear-gradient(135deg, #ffd700, #ff9900); color: #111;
+    padding: 14px 36px; border: none; border-radius: 30px;
+    font-size: 15px; font-weight: 900; letter-spacing: 1px;
+    box-shadow: 0 4px 20px rgba(255,215,0,0.6);
 }
-.auth-box .logo-big {
-    text-align: center; font-size: 38px; font-weight: 900;
-    color: #ffd700; letter-spacing: 5px;
-    margin-bottom: 4px;
-    text-shadow: 0 0 25px rgba(255,215,0,0.8), 0 0 50px rgba(255,215,0,0.4);
-}
-.auth-box .logo-sub {
-    text-align: center; font-size: 11px; color: #ff0033;
-    letter-spacing: 6px; margin-bottom: 30px; font-weight: bold;
-}
-.auth-box .gold-line {
-    height: 2px; background: linear-gradient(90deg, transparent, #ffd700, transparent);
-    margin: 16px 0; opacity: 0.6;
-}
-
-/* ИНПУТЫ */
-input {
-    width: 100%; padding: 15px 18px; margin: 6px 0;
-    background: #0a0a0f; border: 1px solid #2a2a3a;
-    border-radius: 12px; color: #fff; font-size: 14px;
-    transition: all 0.2s;
-}
-input:focus { outline: none; border-color: #ff0033; box-shadow: 0 0 15px rgba(255,0,51,0.4); }
-
-/* КНОПКИ */
-button {
-    width: 100%; padding: 15px; margin: 6px 0;
-    border: none; border-radius: 12px;
-    font-size: 14px; font-weight: 900;
-    cursor: pointer; letter-spacing: 1px;
-    transition: transform 0.1s;
-}
-button:active { transform: scale(0.97); }
-.btn-red { background: linear-gradient(135deg, #ff0033, #cc0022); color: #fff; box-shadow: 0 4px 20px rgba(255,0,51,0.6); }
-.btn-gold { background: linear-gradient(135deg, #ffd700, #ff9900); color: #111; box-shadow: 0 4px 20px rgba(255,215,0,0.5); }
-.btn-dark { background: #1a1a24; color: #aaa; border: 1px solid #2a2a3a; }
-.btn-green { background: linear-gradient(135deg, #00cc66, #009944); color: #fff; box-shadow: 0 4px 20px rgba(0,204,102,0.5); }
-.btn-purple { background: linear-gradient(135deg, #8000ff, #4d0099); color: #fff; box-shadow: 0 4px 20px rgba(128,0,255,0.5); }
-button:disabled { opacity: 0.4; }
 
 /* БАЛАНСЫ */
-.balances {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
-    margin-bottom: 16px;
+.balances { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 16px; }
+.bal-card {
+    background: linear-gradient(135deg, #1a1a1a, #0d0d0d);
+    border: 2px solid #ffd700; border-radius: 16px; padding: 16px; text-align: center;
 }
-.balance-card {
-    background: linear-gradient(135deg, #14141f, #0a0a0f);
-    border: 2px solid; border-radius: 16px;
-    padding: 16px; text-align: center;
-    box-shadow: 0 0 20px rgba(0,0,0,0.5);
-}
-.balance-card.gold { border-color: #ffd700; box-shadow: 0 0 25px rgba(255,215,0,0.3); }
-.balance-card.blue { border-color: #3366ff; box-shadow: 0 0 25px rgba(51,102,255,0.3); }
-.balance-card .lbl { font-size: 10px; color: #888; letter-spacing: 2px; }
-.balance-card .val { font-size: 26px; font-weight: 900; margin-top: 4px; }
-.balance-card.gold .val { color: #ffd700; text-shadow: 0 0 15px rgba(255,215,0,0.7); }
-.balance-card.blue .val { color: #66aaff; text-shadow: 0 0 15px rgba(51,102,255,0.7); }
-
-/* ТАБЫ */
-.tabs {
-    display: flex; gap: 6px; margin-bottom: 16px;
-    overflow-x: auto; padding-bottom: 6px;
-}
-.tabs::-webkit-scrollbar { display: none; }
-.tabs button {
-    padding: 10px 16px; font-size: 12px;
-    background: #14141f; color: #888;
-    border: 1px solid #2a2a3a; border-radius: 12px;
-    white-space: nowrap; flex: 0 0 auto; width: auto; margin: 0;
-}
-.tabs button.active {
-    background: linear-gradient(135deg, #ff0033, #cc0022);
-    color: #fff; border-color: #ff0033;
-    box-shadow: 0 0 20px rgba(255,0,51,0.6);
-}
+.bal-card.blue { border-color: #3366ff; }
+.bal-card .lbl { font-size: 10px; color: #888; letter-spacing: 2px; }
+.bal-card .val { font-size: 24px; font-weight: 900; color: #ffd700; margin-top: 4px; }
+.bal-card.blue .val { color: #66aaff; }
 
 /* СЕКЦИИ */
-.section {
-    background: linear-gradient(135deg, #14141f, #0a0a0f);
-    border: 1px solid #2a2a3a;
-    border-radius: 18px;
-    padding: 22px;
-    margin-bottom: 14px;
-    box-shadow: 0 0 20px rgba(0,0,0,0.4);
-}
-.section-title {
-    color: #ffd700; font-size: 14px; font-weight: 900;
-    letter-spacing: 2px; margin-bottom: 16px;
-    display: flex; align-items: center; gap: 8px;
-    text-shadow: 0 0 10px rgba(255,215,0,0.4);
-}
+.section { background: #141414; border-radius: 18px; padding: 20px; margin: 16px; border: 1px solid #222; }
+.section-title { color: #ffd700; font-size: 15px; font-weight: 900; letter-spacing: 1px; margin-bottom: 14px; }
 
-/* ПРОФИЛЬ */
-.profile-card {
-    background: linear-gradient(135deg, #1a0a1f 0%, #0a0a0f 100%);
-    border: 2px solid #8000ff;
-    border-radius: 20px;
-    padding: 24px; text-align: center;
-    margin-bottom: 16px;
-    box-shadow: 0 0 30px rgba(128,0,255,0.3);
-}
-.profile-card .avatar {
-    width: 80px; height: 80px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #ff0033, #8000ff);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 40px; margin: 0 auto 12px;
-    box-shadow: 0 0 25px rgba(255,0,51,0.5);
-    border: 3px solid #ffd700;
-}
-.profile-card .name {
-    font-size: 20px; color: #ffd700; font-weight: 900;
-    letter-spacing: 1px; text-shadow: 0 0 15px rgba(255,215,0,0.5);
-}
-.profile-card .uid { font-size: 11px; color: #666; margin-top: 4px; }
+/* КНОПКИ */
+button { width: 100%; padding: 15px; margin: 6px 0; border: none; border-radius: 14px; font-size: 14px; font-weight: 900; cursor: pointer; letter-spacing: 1px; }
+button:active { transform: scale(0.97); }
+.btn-gold { background: linear-gradient(135deg, #ffd700, #ff9900); color: #111; }
+.btn-red { background: linear-gradient(135deg, #ff0033, #cc0022); color: #fff; }
+.btn-dark { background: #1a1a1a; color: #ccc; border: 1px solid #333; }
+.btn-green { background: linear-gradient(135deg, #00cc66, #009944); color: #fff; }
+.btn-purple { background: linear-gradient(135deg, #8000ff, #4d0099); color: #fff; }
+button:disabled { opacity: 0.4; }
+
+input { width: 100%; padding: 15px; margin: 6px 0; background: #0a0a0a; border: 1px solid #333; border-radius: 14px; color: #fff; font-size: 14px; }
+input:focus { outline: none; border-color: #ffd700; }
 
 /* КЕЙСЫ */
 .case-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.case {
-    border-radius: 16px; padding: 22px 12px;
-    text-align: center; cursor: pointer;
-    border: 2px solid; position: relative; overflow: hidden;
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-.case:active { transform: scale(0.96); }
-.case .icon { font-size: 44px; margin-bottom: 8px; }
-.case .name { font-size: 13px; color: #fff; font-weight: 900; letter-spacing: 1px; }
-.case .price { font-size: 14px; color: #ffd700; margin-top: 6px; font-weight: 900; }
-.case.poor { background: linear-gradient(135deg, #0a0a2a, #1a1a3a); border-color: #4b69ff; box-shadow: 0 0 20px rgba(75,105,255,0.3); }
-.case.medium { background: linear-gradient(135deg, #1a0a2a, #2a1a3a); border-color: #8847ff; box-shadow: 0 0 20px rgba(136,71,255,0.3); }
-.case.cute { background: linear-gradient(135deg, #2a0a2a, #3a1a3a); border-color: #d32ce6; box-shadow: 0 0 20px rgba(211,44,230,0.3); }
-.case.admin { background: linear-gradient(135deg, #2a0a0a, #3a1a1a); border-color: #eb4b4b; box-shadow: 0 0 20px rgba(235,75,75,0.3); }
-.case.rich { background: linear-gradient(135deg, #2a1a0a, #3a2a1a); border-color: #ffd700; box-shadow: 0 0 25px rgba(255,215,0,0.4); grid-column: span 2; }
+.case { border-radius: 16px; padding: 20px 12px; text-align: center; cursor: pointer; border: 2px solid; }
+.case .icon { font-size: 42px; }
+.case .name { font-size: 13px; color: #fff; font-weight: 900; margin-top: 6px; }
+.case .price { font-size: 13px; color: #ffd700; margin-top: 6px; font-weight: 900; }
+.case.poor { background: linear-gradient(135deg, #0a0a2a, #1a1a3a); border-color: #4b69ff; }
+.case.medium { background: linear-gradient(135deg, #1a0a2a, #2a1a3a); border-color: #8847ff; }
+.case.cute { background: linear-gradient(135deg, #2a0a2a, #3a1a3a); border-color: #d32ce6; }
+.case.admin { background: linear-gradient(135deg, #2a0a0a, #3a1a1a); border-color: #eb4b4b; }
+.case.rich { background: linear-gradient(135deg, #2a1a0a, #3a2a1a); border-color: #ffd700; grid-column: span 2; }
 
 /* КОЛЕСО */
-.wheel-wrap { position: relative; margin: 20px auto; width: 230px; height: 230px; }
-.wheel {
-    width: 230px; height: 230px; border-radius: 50%;
-    background: conic-gradient(#ff0033 0deg 90deg, #ffd700 90deg 180deg, #00cc66 180deg 270deg, #3366ff 270deg 360deg);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 64px;
-    transition: transform 4s cubic-bezier(0.15, 0.7, 0.3, 1);
-    box-shadow: 0 0 50px rgba(255,215,0,0.5), inset 0 0 30px rgba(0,0,0,0.6);
-    border: 5px solid #ffd700;
-}
-.wheel-arrow {
-    position: absolute; top: -16px; left: 50%;
-    transform: translateX(-50%);
-    font-size: 36px; z-index: 10;
-    color: #ff0033;
-    filter: drop-shadow(0 0 12px #ff0033);
-}
-.prizes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 14px 0; }
-.prize-item {
-    background: #14141f; border: 1px solid #2a2a3a;
-    border-radius: 12px; padding: 12px; text-align: center; font-size: 12px;
-}
-.prize-item .p-val { color: #ffd700; font-weight: 900; font-size: 16px; display: block; margin-top: 4px; }
-.timer { text-align: center; font-size: 14px; color: #ff9900; margin: 12px 0; font-weight: 900; letter-spacing: 1px; }
-
-/* ДУЭЛИ */
-.duel-info {
-    background: linear-gradient(135deg, #1a0a0a, #0a0a0f);
-    padding: 14px; border-radius: 14px; margin: 8px 0;
-    font-size: 13px; border: 1px solid #ff0033;
-    box-shadow: 0 0 15px rgba(255,0,51,0.2);
-}
-
-/* ПОПОЛНЕНИЕ */
-.deposit-box {
-    background: linear-gradient(135deg, #1a0a0a, #0a0a0f);
-    border: 2px solid #ffd700; border-radius: 18px;
-    padding: 22px; text-align: center;
-    box-shadow: 0 0 30px rgba(255,215,0,0.3);
-}
-.deposit-box .dep-title { color: #ffd700; font-weight: 900; font-size: 15px; margin-bottom: 12px; letter-spacing: 1px; }
-.deposit-box .dep-text { font-size: 14px; color: #ccc; line-height: 1.8; }
-.deposit-box .dep-nick { color: #ff0033; font-weight: 900; font-size: 18px; text-shadow: 0 0 10px rgba(255,0,51,0.6); }
+.wheel-wrap { position: relative; margin: 20px auto; width: 220px; height: 220px; }
+.wheel { width: 220px; height: 220px; border-radius: 50%; background: conic-gradient(#ff0033 0deg 90deg, #ffd700 90deg 180deg, #00cc66 180deg 270deg, #3366ff 270deg 360deg); display: flex; align-items: center; justify-content: center; font-size: 60px; transition: transform 4s; border: 5px solid #ffd700; box-shadow: 0 0 40px rgba(255,215,0,0.5); }
+.wheel-arrow { position: absolute; top: -16px; left: 50%; transform: translateX(-50%); font-size: 32px; color: #ff0033; }
 
 /* СТАТУС */
 .status { text-align: center; font-size: 13px; margin: 10px 0; min-height: 18px; white-space: pre-line; color: #888; }
 
-/* АДМИНКА */
-.admin-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
-.admin-stat {
-    background: linear-gradient(135deg, #1a0a2a, #0a0a0f);
-    padding: 14px; border-radius: 12px; text-align: center;
-    border: 1px solid #8000ff;
-    box-shadow: 0 0 15px rgba(128,0,255,0.3);
-}
-.admin-stat .val { color: #ffd700; font-weight: 900; font-size: 22px; }
-.admin-stat .lbl { font-size: 11px; color: #888; margin-top: 4px; }
-.admin-user {
-    background: #14141f; padding: 14px; border-radius: 12px;
-    margin: 8px 0; font-size: 13px; border: 1px solid #2a2a3a;
-}
-.admin-user .row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-.admin-user .btns { display: flex; gap: 5px; flex-wrap: wrap; }
-.admin-user button { width: auto; padding: 6px 12px; font-size: 11px; margin: 0; }
+/* ПРОФИЛЬ */
+.prof-card { background: linear-gradient(135deg, #1a0a1f, #0a0a0a); border: 2px solid #8000ff; border-radius: 20px; padding: 24px; text-align: center; margin: 16px; }
+.prof-avatar { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, #ff0033, #8000ff); display: flex; align-items: center; justify-content: center; font-size: 40px; margin: 0 auto 12px; border: 3px solid #ffd700; }
+.prof-name { font-size: 20px; color: #ffd700; font-weight: 900; }
 
 /* НИЖНЕЕ МЕНЮ */
 .bottom-nav {
     position: fixed; bottom: 0; left: 0; right: 0;
-    background: linear-gradient(180deg, #0a0a0f 0%, #14141f 100%);
-    border-top: 2px solid #ff0033;
-    display: flex; padding: 10px 0 14px;
-    z-index: 100;
-    box-shadow: 0 -4px 25px rgba(255,0,51,0.3);
+    background: linear-gradient(180deg, #0d0d0d, #1a1a1a);
+    border-top: 2px solid #ffd700;
+    display: flex; padding: 10px 0 14px; z-index: 100;
 }
 .bottom-nav button {
-    flex: 1; background: none; border: none;
-    color: #666; font-size: 10px; font-weight: bold;
-    display: flex; flex-direction: column; align-items: center;
-    gap: 4px; cursor: pointer; padding: 4px;
-    letter-spacing: 1px;
+    flex: 1; background: none; border: none; color: #666;
+    font-size: 10px; font-weight: 900; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 4px; width: auto; margin: 0; border-radius: 0;
 }
-.bottom-nav button .nav-icon { font-size: 22px; }
-.bottom-nav button.active { color: #ffd700; text-shadow: 0 0 10px rgba(255,215,0,0.5); }
+.bottom-nav button .ni { font-size: 22px; }
+.bottom-nav button.active { color: #ffd700; }
+
+/* АВТОРИЗАЦИЯ */
+.auth-bg { min-height: 100vh; background: radial-gradient(circle at top, #2a1a00 0%, #0a0a0a 60%); display: flex; align-items: center; justify-content: center; padding: 20px; }
+.auth-box { background: #141414; border: 2px solid #ffd700; border-radius: 24px; padding: 32px 24px; width: 100%; max-width: 420px; box-shadow: 0 0 60px rgba(255,215,0,0.3); }
+.auth-logo { text-align: center; font-size: 36px; font-weight: 900; color: #ffd700; letter-spacing: 4px; margin-bottom: 4px; text-shadow: 0 0 25px rgba(255,215,0,0.8); }
+.auth-sub { text-align: center; font-size: 11px; color: #ff9900; letter-spacing: 6px; margin-bottom: 28px; font-weight: 900; }
 </style>
 </head>
 <body>
 
-<!-- ВЕРХНЯЯ ПАНЕЛЬ -->
-<div class="topbar hidden" id="topbar">
-    <div class="logo">WINTER</div>
-    <div class="user-mini"><span class="dot"></span><span id="topUser">@user</span></div>
-</div>
-
 <!-- АВТОРИЗАЦИЯ -->
 <div class="auth-bg" id="authPage">
     <div class="auth-box">
-        <div class="logo-big">WINTER</div>
-        <div class="logo-sub">CASINO 2026</div>
-        <div class="gold-line"></div>
-        <input type="text" id="username" placeholder="@ Ваш ник (мин. 5 симв.)">
+        <div class="auth-logo">WINTER</div>
+        <div class="auth-sub">CASINO</div>
+        <input type="text" id="username" placeholder="@ Ваш ник (мин 5 симв после @)">
         <input type="password" id="password" placeholder="🔑 Пароль">
-        <button class="btn-red" onclick="register()">🎁 РЕГИСТРАЦИЯ (+100 ⭐)</button>
+        <button class="btn-gold" onclick="register()">🎁 РЕГИСТРАЦИЯ (+100 ⭐)</button>
         <button class="btn-dark" onclick="login()">🔓 ВОЙТИ</button>
-        <div class="gold-line"></div>
-        <button class="btn-purple" onclick="showAdminLogin()">👑 АДМИН-ПАНЕЛЬ</button>
+        <button class="btn-purple" onclick="showPage('adminLoginPage')">👑 АДМИН</button>
         <div class="status" id="authStatus"></div>
     </div>
 </div>
 
 <!-- АДМИН ВХОД -->
 <div class="auth-bg hidden" id="adminLoginPage">
-    <div class="auth-box" style="border-color:#8000ff;box-shadow:0 0 60px rgba(128,0,255,0.5);">
-        <div class="logo-big" style="color:#8000ff;text-shadow:0 0 25px rgba(128,0,255,0.8);">ADMIN</div>
-        <div class="logo-sub" style="color:#8000ff;">CONTROL PANEL</div>
-        <div class="gold-line"></div>
+    <div class="auth-box" style="border-color:#8000ff;">
+        <div class="auth-logo" style="color:#8000ff;">ADMIN</div>
+        <div class="auth-sub" style="color:#8000ff;">PANEL</div>
         <input type="password" id="adminPass" placeholder="🔐 Пароль админа">
         <button class="btn-purple" onclick="adminLogin()">ВОЙТИ</button>
-        <button class="btn-dark" onclick="hideAdminLogin()">← НАЗАД</button>
+        <button class="btn-dark" onclick="showPage('authPage')">← НАЗАД</button>
         <div class="status" id="adminLoginStatus"></div>
     </div>
 </div>
 
 <!-- АДМИН ПАНЕЛЬ -->
-<div class="page hidden" id="adminPage">
+<div id="adminPage" class="hidden">
+    <div class="topbar"><div class="logo">ADMIN</div><div class="bonus-badge">👑</div></div>
     <div class="section">
-        <div class="section-title">👑 АДМИН ПАНЕЛЬ</div>
-        <div class="admin-stats" id="adminStats"></div>
+        <div class="section-title">📊 СТАТИСТИКА</div>
+        <div id="adminStats" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"></div>
     </div>
     <div class="section">
-        <div class="section-title">💰 ВЫДАТЬ ЗВЁЗДЫ</div>
-        <input type="text" id="adminGiveUser" placeholder="@ Ник игрока">
-        <input type="number" id="adminGiveAmount" placeholder="Сумма (можно минус)">
+        <div class="section-title">💰 ВЫДАТЬ</div>
+        <input type="text" id="adminGiveUser" placeholder="@ Ник">
+        <input type="number" id="adminGiveAmount" placeholder="Сумма">
         <button class="btn-gold" onclick="adminGive()">ВЫДАТЬ</button>
     </div>
     <div class="section">
-        <div class="section-title">💎 КОМИССИЯ</div>
-        <div class="status" id="adminCommission">Загрузка...</div>
-        <button class="btn-green" onclick="adminCollect()">ЗАБРАТЬ ВСЁ</button>
-    </div>
-    <div class="section">
-        <div class="section-title">👥 ПОЛЬЗОВАТЕЛИ</div>
+        <div class="section-title">👥 ЮЗЕРЫ</div>
         <div id="adminUsersList"></div>
         <button class="btn-dark" onclick="adminRefresh()">🔄 ОБНОВИТЬ</button>
         <button class="btn-red" onclick="adminLogout()">🚪 ВЫЙТИ</button>
@@ -330,46 +160,32 @@ button:disabled { opacity: 0.4; }
     </div>
 </div>
 
-<!-- ОСНОВНОЙ ЭКРАН -->
-<div class="page hidden" id="mainPage">
-    <div class="balances">
-        <div class="balance-card gold">
-            <div class="lbl">⭐ ЗВЁЗДЫ</div>
-            <div class="val" id="starCount">0</div>
-        </div>
-        <div class="balance-card blue">
-            <div class="lbl">💎 ГРАММЫ</div>
-            <div class="val" id="gramCount">0</div>
-        </div>
+<!-- ОСНОВНОЕ -->
+<div id="mainPage" class="hidden">
+    <div class="topbar">
+        <div class="logo">WINTER</div>
+        <div class="bonus-badge">⭐ <span id="topStars">0</span></div>
     </div>
-    <div class="status" id="mainStatus"></div>
 
-    <div class="tabs">
-        <button class="active" onclick="showTab('wheel', this)">🎡 Колесо</button>
-        <button onclick="showTab('cases', this)">📦 Кейсы</button>
-        <button onclick="showTab('duel', this)">⚔️ Дуэли</button>
-        <button onclick="showTab('promo', this)">🎁 Промокод</button>
-        <button onclick="showTab('exchange', this)">💎 Обмен</button>
-        <button onclick="showTab('deposit', this)">💳 Пополнить</button>
-        <button onclick="showTab('withdraw', this)">💸 Вывод</button>
-        <button onclick="showTab('profile', this)">👤 Профиль</button>
+    <div class="banner">
+        <h2 id="bannerTitle">🎉 БОНУС 100%</h2>
+        <p>Первый депозит удваиваем!</p>
+        <button onclick="showTab('deposit')">ПОЛУЧИТЬ БОНУС</button>
     </div>
+
+    <div class="balances">
+        <div class="bal-card"><div class="lbl">⭐ ЗВЁЗДЫ</div><div class="val" id="starCount">0</div></div>
+        <div class="bal-card blue"><div class="lbl">💎 ГРАММЫ</div><div class="val" id="gramCount">0</div></div>
+    </div>
+
+    <div class="status" id="mainStatus"></div>
 
     <div id="tab-wheel">
         <div class="section">
             <div class="section-title">🎡 КОЛЕСО УДАЧИ</div>
-            <div class="wheel-wrap">
-                <div class="wheel-arrow">▼</div>
-                <div class="wheel" id="wheelEl">🎰</div>
-            </div>
-            <div class="prizes">
-                <div class="prize-item">💀<span class="p-val">0 ⭐</span></div>
-                <div class="prize-item">🥉<span class="p-val">10 ⭐</span></div>
-                <div class="prize-item">🥈<span class="p-val">50 ⭐</span></div>
-                <div class="prize-item">🥇<span class="p-val">100 ⭐</span></div>
-            </div>
-            <div class="timer" id="wheelTimer"></div>
-            <button class="btn-red" onclick="spinWheel()" id="wheelBtn">🎡 КРУТИТЬ</button>
+            <div class="wheel-wrap"><div class="wheel-arrow">▼</div><div class="wheel" id="wheelEl">🎰</div></div>
+            <div class="status" id="wheelTimer"></div>
+            <button class="btn-gold" onclick="spinWheel()" id="wheelBtn">🎡 КРУТИТЬ</button>
         </div>
     </div>
 
@@ -386,29 +202,9 @@ button:disabled { opacity: 0.4; }
         </div>
     </div>
 
-    <div id="tab-duel" class="hidden">
-        <div class="section">
-            <div class="section-title">🤖 ДУЭЛЬ С БОТОМ</div>
-            <input type="number" id="duelBotBet" placeholder="Ставка" value="50">
-            <button class="btn-red" onclick="duelBot()">🎲 БРОСИТЬ КУБИКИ</button>
-        </div>
-        <div class="section">
-            <div class="section-title">⚔️ ДУЭЛЬ С ИГРОКОМ</div>
-            <input type="text" id="duelOpponent" placeholder="@ Ник соперника">
-            <input type="number" id="duelPlayerBet" placeholder="Ставка" value="50">
-            <button class="btn-gold" onclick="duelCreate()">📨 СОЗДАТЬ ВЫЗОВ</button>
-            <button class="btn-dark" onclick="duelList()">📬 ПРОВЕРИТЬ ВЫЗОВЫ</button>
-            <div id="duelListBox"></div>
-        </div>
-    </div>
-
     <div id="tab-promo" class="hidden">
         <div class="section">
             <div class="section-title">🎁 ПРОМОКОД</div>
-            <div class="deposit-box">
-                <div class="dep-title">ВВЕДИ ПРОМОКОД</div>
-                <div class="dep-text">Получи бонусные звёзды!<br>Каждый промокод — один раз на аккаунт.</div>
-            </div>
             <input type="text" id="promoInput" placeholder="Введите промокод">
             <button class="btn-gold" onclick="usePromo()">✅ АКТИВИРОВАТЬ</button>
             <div class="status" id="promoStatus"></div>
@@ -417,15 +213,9 @@ button:disabled { opacity: 0.4; }
 
     <div id="tab-exchange" class="hidden">
         <div class="section">
-            <div class="section-title">💎 ОБМЕН ВАЛЮТЫ</div>
-            <div class="deposit-box">
-                <div class="dep-title">⭐ → 💎</div>
-                <div class="dep-text">
-                    <b>1000 звёзд = 1 грамм</b><br>
-                    Обмен кратно 1000 звёзд
-                </div>
-            </div>
-            <input type="number" id="exchangeAmount" placeholder="Сколько звёзд обменять (мин 1000)" step="1000">
+            <div class="section-title">💎 ОБМЕН</div>
+            <div class="status">1000 звёзд = 1 грамм</div>
+            <input type="number" id="exchangeAmount" placeholder="Сумма (кратно 1000)" step="1000">
             <button class="btn-gold" onclick="exchange()">💎 ОБМЕНЯТЬ</button>
             <div class="status" id="exchangeStatus"></div>
         </div>
@@ -434,56 +224,20 @@ button:disabled { opacity: 0.4; }
     <div id="tab-deposit" class="hidden">
         <div class="section">
             <div class="section-title">💳 ПОПОЛНЕНИЕ</div>
-            <div class="deposit-box">
-                <div class="dep-title">💌 КАК ПОПОЛНИТЬ</div>
-                <div class="dep-text">
-                    Напишите в Wintegramm:<br>
-                    <span class="dep-nick">@referator</span><br><br>
-                    Скажите число ⭐<br><br>
-                    <b>1 ⭐ в Wintegramm = 10 звёзд здесь</b><br>
-                    Минимум: 10 ⭐
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="tab-withdraw" class="hidden">
-        <div class="section">
-            <div class="section-title">💸 ВЫВОД СРЕДСТВ</div>
-            <div class="deposit-box">
-                <div class="dep-title">💌 КАК ВЫВЕСТИ</div>
-                <div class="dep-text">
-                    Напишите в Wintegramm:<br>
-                    <span class="dep-nick">@referator</span><br><br>
-                    Скажите: <b>Вывод</b><br>
-                    И укажите ваш баланс<br><br>
-                    <b>Минимум для вывода: 1000 ⭐</b>
-                </div>
-            </div>
-            <input type="number" id="withdrawAmount" placeholder="Сумма вывода (мин 1000)">
-            <button class="btn-gold" onclick="withdraw()">💸 СОЗДАТЬ ЗАЯВКУ</button>
-            <div class="status" id="withdrawStatus"></div>
+            <div class="status">Напишите в Wintegramm: <b style="color:#ffd700;">@referator</b><br><br>Скажите число ⭐<br><br>1 ⭐ = 10 звёзд здесь</div>
         </div>
     </div>
 
     <div id="tab-profile" class="hidden">
-        <div class="profile-card">
-            <div class="avatar">👤</div>
-            <div class="name" id="profileName">@user</div>
-            <div class="uid" id="profileUid">ID: -</div>
+        <div class="prof-card">
+            <div class="prof-avatar">👤</div>
+            <div class="prof-name" id="profileName">@user</div>
+        </div>
+        <div class="balances">
+            <div class="bal-card"><div class="lbl">⭐ ЗВЁЗДЫ</div><div class="val" id="profileStars">0</div></div>
+            <div class="bal-card blue"><div class="lbl">💎 ГРАММЫ</div><div class="val" id="profileGrams">0</div></div>
         </div>
         <div class="section">
-            <div class="section-title">📊 СТАТИСТИКА</div>
-            <div class="balances">
-                <div class="balance-card gold">
-                    <div class="lbl">⭐ ЗВЁЗДЫ</div>
-                    <div class="val" id="profileStars">0</div>
-                </div>
-                <div class="balance-card blue">
-                    <div class="lbl">💎 ГРАММЫ</div>
-                    <div class="val" id="profileGrams">0</div>
-                </div>
-            </div>
             <button class="btn-dark" onclick="refreshProfile()">🔄 ОБНОВИТЬ</button>
             <button class="btn-red" onclick="logout()">🚪 ВЫЙТИ</button>
         </div>
@@ -492,240 +246,148 @@ button:disabled { opacity: 0.4; }
 
 <!-- НИЖНЕЕ МЕНЮ -->
 <div class="bottom-nav hidden" id="bottomNav">
-    <button class="active" onclick="showTab('wheel', this, 'nav-wheel')" id="nav-wheel"><div class="nav-icon">🎡</div>КОЛЕСО</button>
-    <button onclick="showTab('cases', this, 'nav-cases')" id="nav-cases"><div class="nav-icon">📦</div>КЕЙСЫ</button>
-    <button onclick="showTab('duel', this, 'nav-duel')" id="nav-duel"><div class="nav-icon">⚔️</div>ДУЭЛИ</button>
-    <button onclick="showTab('profile', this, 'nav-profile')" id="nav-profile"><div class="nav-icon">👤</div>ПРОФИЛЬ</button>
+    <button class="active" onclick="showTab('wheel', this)" id="nav-wheel"><div class="ni">🎡</div>КОЛЕСО</button>
+    <button onclick="showTab('cases', this)" id="nav-cases"><div class="ni">📦</div>КЕЙСЫ</button>
+    <button onclick="showTab('promo', this)" id="nav-promo"><div class="ni">🎁</div>ПРОМО</button>
+    <button onclick="showTab('exchange', this)" id="nav-exchange"><div class="ni">💎</div>ОБМЕН</button>
+    <button onclick="showTab('profile', this)" id="nav-profile"><div class="ni">👤</div>ПРОФИЛЬ</button>
 </div>
 
 <script>
 let token = localStorage.getItem('token') || '';
 let adminPass = '';
-let wheelTimerInterval = null;
 
 async function api(url, data) {
     const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
     return res.json();
 }
-function showStatus(el, msg, color) {
-    const e = document.getElementById(el);
-    e.innerText = msg;
-    e.style.color = color || '#888';
+function st(id, msg, color) {
+    const e = document.getElementById(id);
+    if (e) { e.innerText = msg; e.style.color = color || '#888'; }
 }
 function showPage(id) {
-    ['authPage', 'adminLoginPage', 'adminPage', 'mainPage'].forEach(p => document.getElementById(p).classList.add('hidden'));
-    document.getElementById(id).classList.remove('hidden');
-    const authPages = (id === 'authPage' || id === 'adminLoginPage');
-    document.getElementById('topbar').classList.toggle('hidden', authPages);
-    document.getElementById('bottomNav').classList.toggle('hidden', authPages);
+    ['authPage', 'adminLoginPage', 'adminPage', 'mainPage'].forEach(p => {
+        const el = document.getElementById(p);
+        if (el) el.classList.add('hidden');
+    });
+    const target = document.getElementById(id);
+    if (target) target.classList.remove('hidden');
+    const isAuth = (id === 'authPage' || id === 'adminLoginPage');
+    const nav = document.getElementById('bottomNav');
+    if (nav) nav.classList.toggle('hidden', isAuth || id === 'adminPage');
 }
 async function register() {
     const u = document.getElementById('username').value.trim();
     const p = document.getElementById('password').value;
     const r = await api('/api/register', { username: u, password: p });
-    if (!r.ok) return showStatus('authStatus', '❌ ' + r.error, '#ff3355');
-    token = r.token;
-    localStorage.setItem('token', token);
-    enterCasino();
+    if (!r.ok) return st('authStatus', '❌ ' + r.error, '#ff3355');
+    token = r.token; localStorage.setItem('token', token);
+    enter();
 }
 async function login() {
     const u = document.getElementById('username').value.trim();
     const p = document.getElementById('password').value;
     const r = await api('/api/login', { username: u, password: p });
-    if (!r.ok) return showStatus('authStatus', '❌ ' + r.error, '#ff3355');
-    token = r.token;
-    localStorage.setItem('token', token);
-    enterCasino();
+    if (!r.ok) return st('authStatus', '❌ ' + r.error, '#ff3355');
+    token = r.token; localStorage.setItem('token', token);
+    enter();
 }
-function enterCasino() {
+function enter() {
     showPage('mainPage');
     refreshProfile();
 }
 function logout() {
-    if (wheelTimerInterval) clearInterval(wheelTimerInterval);
     localStorage.removeItem('token');
     location.reload();
 }
 async function refreshProfile() {
     const r = await api('/api/profile', { token });
-    if (!r.ok) return showStatus('mainStatus', '❌ ' + r.error, '#ff3355');
+    if (!r.ok) return st('mainStatus', '❌ ' + r.error, '#ff3355');
     document.getElementById('starCount').innerText = r.stars;
     document.getElementById('gramCount').innerText = r.grams || 0;
+    document.getElementById('topStars').innerText = r.stars;
     document.getElementById('profileStars').innerText = r.stars;
     document.getElementById('profileGrams').innerText = r.grams || 0;
     document.getElementById('profileName').innerText = r.username;
-    document.getElementById('profileUid').innerText = 'ID: ' + (r.username ? r.username.slice(1) : '-');
-    document.getElementById('topUser').innerText = r.username;
-    startWheelTimer(r.wheelLeft);
-}
-function startWheelTimer(left) {
-    if (wheelTimerInterval) clearInterval(wheelTimerInterval);
-    const btn = document.getElementById('wheelBtn');
-    const timerEl = document.getElementById('wheelTimer');
-    if (!btn || !timerEl) return;
-    if (left <= 0) {
-        btn.disabled = false;
-        timerEl.innerText = '✅ ДОСТУПНО!';
-        timerEl.style.color = '#00cc66';
-        return;
+    const left = r.wheelLeft;
+    const t = document.getElementById('wheelTimer');
+    const b = document.getElementById('wheelBtn');
+    if (left <= 0) { b.disabled = false; t.innerText = '✅ Доступно!'; t.style.color = '#00cc66'; }
+    else {
+        b.disabled = true;
+        const h = Math.floor(left / 3600000);
+        const m = Math.floor((left % 3600000) / 60000);
+        t.innerText = '⏳ ' + h + 'ч ' + m + 'м';
+        t.style.color = '#ff9900';
     }
-    btn.disabled = true;
-    const endTime = Date.now() + left;
-    function tick() {
-        const diff = endTime - Date.now();
-        if (diff <= 0) {
-            clearInterval(wheelTimerInterval);
-            timerEl.innerText = '✅ ДОСТУПНО!';
-            timerEl.style.color = '#00cc66';
-            btn.disabled = false;
-            return;
-        }
-        const h = Math.floor(diff / 3600000);
-        const m = Math.floor((diff % 3600000) / 60000);
-        const s = Math.floor((diff % 60000) / 1000);
-        timerEl.innerText = '⏳ ' + h + 'ч ' + m + 'м ' + s + 'с';
-        timerEl.style.color = '#ff9900';
-    }
-    tick();
-    wheelTimerInterval = setInterval(tick, 1000);
 }
-function showTab(tab, btn, navId) {
-    ['wheel', 'cases', 'duel', 'promo', 'exchange', 'deposit', 'withdraw', 'profile'].forEach(t => {
+function showTab(tab, btn) {
+    ['wheel', 'cases', 'promo', 'exchange', 'deposit', 'profile'].forEach(t => {
         const el = document.getElementById('tab-' + t);
         if (el) el.classList.add('hidden');
     });
     const target = document.getElementById('tab-' + tab);
     if (target) target.classList.remove('hidden');
-    document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
-    if (btn) btn.classList.add('active');
     document.querySelectorAll('.bottom-nav button').forEach(b => b.classList.remove('active'));
-    if (navId) {
-        const nav = document.getElementById(navId);
-        if (nav) nav.classList.add('active');
-    }
+    if (btn) btn.classList.add('active');
 }
 async function spinWheel() {
-    const wheel = document.getElementById('wheelEl');
-    wheel.style.transform = 'rotate(1080deg)';
+    const w = document.getElementById('wheelEl');
+    w.style.transform = 'rotate(1080deg)';
     setTimeout(async () => {
         const r = await api('/api/wheel', { token });
-        if (!r.ok) {
-            showStatus('mainStatus', '❌ ' + r.error, '#ff3355');
-            wheel.style.transform = 'rotate(0deg)';
-            refreshProfile();
-            return;
-        }
-        let emoji = r.prize === 0 ? '💀' : r.prize === 10 ? '🥉' : r.prize === 50 ? '🥈' : '🥇';
-        showStatus('mainStatus', emoji + ' ВЫПАЛО: ' + r.prize + ' ⭐', '#00cc66');
+        if (!r.ok) { st('mainStatus', '❌ ' + r.error, '#ff3355'); w.style.transform = 'rotate(0deg)'; return; }
+        st('mainStatus', '🎉 Выпало: ' + r.prize + ' ⭐', '#00cc66');
         refreshProfile();
     }, 4100);
 }
-async function openCase(type) {
-    const r = await api('/api/case', { token, caseType: type });
-    if (!r.ok) return showStatus('mainStatus', '❌ ' + r.error, '#ff3355');
-    showStatus('mainStatus', '🎁 ИЗ КЕЙСА: ' + r.prize + ' ⭐', '#00cc66');
+async function openCase(t) {
+    const r = await api('/api/case', { token, caseType: t });
+    if (!r.ok) return st('mainStatus', '❌ ' + r.error, '#ff3355');
+    st('mainStatus', '🎁 Из кейса: ' + r.prize + ' ⭐', '#00cc66');
     refreshProfile();
-}
-async function duelBot() {
-    const bet = parseInt(document.getElementById('duelBotBet').value);
-    const r = await api('/api/duel-bot', { token, bet });
-    if (!r.ok) return showStatus('mainStatus', '❌ ' + r.error, '#ff3355');
-    let txt = '🎲 ВЫ: ' + r.my + ' | 🤖 БОТ: ' + r.bot + '\n';
-    if (r.result === 'win') txt += '🏆 ПОБЕДА! +' + Math.floor(bet * 0.5) + ' ⭐';
-    if (r.result === 'lose') txt += '💀 ПРОИГРЫШ! -' + bet + ' ⭐';
-    if (r.result === 'draw') txt += '🤝 НИЧЬЯ';
-    showStatus('mainStatus', txt, r.result === 'win' ? '#00cc66' : '#ff3355');
-    refreshProfile();
-}
-async function duelCreate() {
-    const opponent = document.getElementById('duelOpponent').value.trim();
-    const bet = parseInt(document.getElementById('duelPlayerBet').value);
-    const r = await api('/api/duel-create', { token, bet, opponent });
-    if (!r.ok) return showStatus('mainStatus', '❌ ' + r.error, '#ff3355');
-    showStatus('mainStatus', '📨 ВЫЗОВ СОЗДАН!', '#00cc66');
-}
-async function duelList() {
-    const r = await api('/api/duel-list', { token });
-    if (!r.ok) return;
-    const box = document.getElementById('duelListBox');
-    if (r.duels.length === 0) { box.innerHTML = '<div class="status">📭 НЕТ ВЫЗОВОВ</div>'; return; }
-    box.innerHTML = r.duels.map(d =>
-        '<div class="duel-info">⚔️ ВЫЗОВ ОТ <b>' + d.challenger + '</b><br>💰 СТАВКА: ' + d.bet + ' ⭐<br>' +
-        '<button class="btn-green" onclick="duelAccept(\'' + d.id + '\')">✅ ПРИНЯТЬ</button></div>'
-    ).join('');
-}
-async function duelAccept(duelId) {
-    const r = await api('/api/duel-accept', { token, duelId });
-    if (!r.ok) return showStatus('mainStatus', '❌ ' + r.error, '#ff3355');
-    let txt = '🎲 ВЫ: ' + r.my + ' | СОПЕРНИК: ' + r.his + '\n';
-    if (r.result === 'win') txt += '🏆 ПОБЕДА! КОМИССИЯ: ' + r.commission + ' ⭐';
-    if (r.result === 'lose') txt += '💀 ПРОИГРЫШ';
-    if (r.result === 'draw') txt += '🤝 НИЧЬЯ';
-    showStatus('mainStatus', txt, r.result === 'win' ? '#00cc66' : '#ff3355');
-    refreshProfile();
-    duelList();
 }
 async function usePromo() {
     const code = document.getElementById('promoInput').value.trim();
-    if (!code) return showStatus('promoStatus', '❌ Введите промокод', '#ff3355');
+    if (!code) return st('promoStatus', '❌ Введите промокод', '#ff3355');
     const r = await api('/api/promo', { token, code });
-    if (!r.ok) return showStatus('promoStatus', '❌ ' + r.error, '#ff3355');
-    showStatus('promoStatus', '✅ +' + r.amount + ' ⭐', '#00cc66');
+    if (!r.ok) return st('promoStatus', '❌ ' + r.error, '#ff3355');
+    st('promoStatus', '✅ +' + r.amount + ' ⭐', '#00cc66');
     document.getElementById('promoInput').value = '';
     refreshProfile();
 }
 async function exchange() {
     const amount = parseInt(document.getElementById('exchangeAmount').value);
     const r = await api('/api/exchange', { token, stars: amount });
-    if (!r.ok) return showStatus('exchangeStatus', '❌ ' + r.error, '#ff3355');
-    showStatus('exchangeStatus', '✅ Обменяно! +' + r.exchanged + ' 💎', '#00cc66');
-    document.getElementById('exchangeAmount').value = '';
+    if (!r.ok) return st('exchangeStatus', '❌ ' + r.error, '#ff3355');
+    st('exchangeStatus', '✅ +' + r.exchanged + ' 💎', '#00cc66');
     refreshProfile();
-}
-async function withdraw() {
-    const amount = parseInt(document.getElementById('withdrawAmount').value);
-    const r = await api('/api/withdraw', { token, amount });
-    if (!r.ok) return showStatus('withdrawStatus', '❌ ' + r.error, '#ff3355');
-    showStatus('withdrawStatus', '✅ ' + r.message + '\nБАЛАНС: ' + r.stars, '#00cc66');
-    refreshProfile();
-}
-function showAdminLogin() {
-    showPage('adminLoginPage');
-}
-function hideAdminLogin() {
-    showPage('authPage');
 }
 async function adminLogin() {
     const p = document.getElementById('adminPass').value;
     const r = await api('/api/admin/login', { password: p });
-    if (!r.ok) return showStatus('adminLoginStatus', '❌ ' + r.error, '#ff3355');
+    if (!r.ok) return st('adminLoginStatus', '❌ ' + r.error, '#ff3355');
     adminPass = p;
     showPage('adminPage');
     adminRefresh();
 }
-function adminLogout() {
-    adminPass = '';
-    showPage('authPage');
-}
+function adminLogout() { adminPass = ''; showPage('authPage'); }
 async function adminRefresh() {
-    const stats = await api('/api/admin/stats', { password: adminPass });
-    if (!stats.ok) return showStatus('adminStatus', '❌ ' + stats.error, '#ff3355');
+    const s = await api('/api/admin/stats', { password: adminPass });
+    if (!s.ok) return st('adminStatus', '❌ ' + s.error, '#ff3355');
     document.getElementById('adminStats').innerHTML =
-        '<div class="admin-stat"><div class="val">' + stats.usersCount + '</div><div class="lbl">👥 Игроков</div></div>' +
-        '<div class="admin-stat"><div class="val">' + stats.totalStars + '</div><div class="lbl">⭐ Всего звёзд</div></div>' +
-        '<div class="admin-stat"><div class="val">' + stats.adminBalance + '</div><div class="lbl">💰 Комиссия</div></div>' +
-        '<div class="admin-stat"><div class="val">' + stats.activeDuels + '</div><div class="lbl">⚔️ Дуэлей</div></div>' +
-        '<div class="admin-stat"><div class="val">' + stats.banned + '</div><div class="lbl">🚫 Забанено</div></div>';
-    document.getElementById('adminCommission').innerText = '💰 Накоплено: ' + stats.adminBalance + ' ⭐';
-    const users = await api('/api/admin/users', { password: adminPass });
-    if (!users.ok) return;
-    document.getElementById('adminUsersList').innerHTML = users.users.map(u =>
-        '<div class="admin-user">' +
-        '<div class="row"><span>👤 ' + u.username + '</span><b>⭐ ' + u.stars + '</b>' + (u.banned ? ' 🚫' : '') + '</div>' +
-        '<div class="btns">' +
-        '<button class="btn-green" onclick="quickGive(\'' + u.username + '\', 1000)">+1000</button>' +
-        '<button class="btn-dark" onclick="quickGive(\'' + u.username + '\', -1000)">-1000</button>' +
-        '<button class="btn-red" onclick="toggleBan(\'' + u.username + '\', ' + (!u.banned) + ')">' + (u.banned ? '✅ Разбан' : '🚫 Бан') + '</button>' +
+        '<div class="bal-card" style="padding:12px;"><div class="val">' + s.usersCount + '</div><div class="lbl">Игроков</div></div>' +
+        '<div class="bal-card" style="padding:12px;"><div class="val">' + s.totalStars + '</div><div class="lbl">Всего ⭐</div></div>' +
+        '<div class="bal-card" style="padding:12px;"><div class="val">' + s.adminBalance + '</div><div class="lbl">Комиссия</div></div>' +
+        '<div class="bal-card" style="padding:12px;"><div class="val">' + s.banned + '</div><div class="lbl">Бан</div></div>';
+    const u = await api('/api/admin/users', { password: adminPass });
+    if (!u.ok) return;
+    document.getElementById('adminUsersList').innerHTML = u.users.map(x =>
+        '<div style="background:#1a1a1a;padding:10px;border-radius:10px;margin:6px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:5px;">' +
+        '<div><b>' + x.username + '</b> — ' + x.stars + ' ⭐ ' + (x.banned ? '🚫' : '') + '</div>' +
+        '<div>' +
+        '<button class="btn-green" style="width:auto;padding:5px 10px;font-size:11px;margin:0;" onclick="quickGive(\'' + x.username + '\',1000)">+1000</button> ' +
+        '<button class="btn-red" style="width:auto;padding:5px 10px;font-size:11px;margin:0;" onclick="toggleBan(\'' + x.username + '\',' + (!x.banned) + ')">' + (x.banned ? 'Разбан' : 'Бан') + '</button>' +
         '</div></div>'
     ).join('');
 }
@@ -733,25 +395,14 @@ async function adminGive() {
     const u = document.getElementById('adminGiveUser').value.trim();
     const a = parseInt(document.getElementById('adminGiveAmount').value);
     const r = await api('/api/admin/give', { password: adminPass, username: u, amount: a });
-    if (!r.ok) return showStatus('adminStatus', '❌ ' + r.error, '#ff3355');
-    showStatus('adminStatus', '✅ Выдано. Баланс: ' + r.stars, '#00cc66');
+    if (!r.ok) return st('adminStatus', '❌ ' + r.error, '#ff3355');
+    st('adminStatus', '✅ Выдано. Баланс: ' + r.stars, '#00cc66');
     adminRefresh();
 }
-async function quickGive(username, amount) {
-    await api('/api/admin/give', { password: adminPass, username, amount });
-    adminRefresh();
-}
-async function toggleBan(username, ban) {
-    await api('/api/admin/ban', { password: adminPass, username, ban });
-    adminRefresh();
-}
-async function adminCollect() {
-    const r = await api('/api/admin/collect', { password: adminPass });
-    if (!r.ok) return showStatus('adminStatus', '❌ ' + r.error, '#ff3355');
-    showStatus('adminStatus', '💰 Собрано: ' + r.collected + ' ⭐', '#00cc66');
-    adminRefresh();
-}
-if (token) enterCasino();
+async function quickGive(u, a) { await api('/api/admin/give', { password: adminPass, username: u, amount: a }); adminRefresh(); }
+async function toggleBan(u, b) { await api('/api/admin/ban', { password: adminPass, username: u, ban: b }); adminRefresh(); }
+
+if (token) enter();
 </script>
 </body>
 </html>
