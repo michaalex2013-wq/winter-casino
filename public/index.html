@@ -6,108 +6,91 @@
 <title>Winter Casino</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
-body { background: #0a0a0a; color: #fff; min-height: 100vh; padding-bottom: 80px; }
-
-/* ТОП */
-.topbar {
-    background: linear-gradient(180deg, #1a1a1a, #0d0d0d);
-    padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;
-    border-bottom: 2px solid #ffd700;
-    position: sticky; top: 0; z-index: 100;
-}
-.topbar .logo { font-size: 22px; font-weight: 900; color: #ffd700; letter-spacing: 2px; }
-.topbar .bonus-badge { background: linear-gradient(135deg, #ffd700, #ff9900); color: #111; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 900; }
+body { background: #0a0a0a; color: #fff; min-height: 100vh; padding-bottom: 90px; }
 .hidden { display: none !important; }
 
-/* БАННЕР */
-.banner {
-    margin: 16px; border-radius: 20px; overflow: hidden; position: relative;
-    background: linear-gradient(135deg, #1a0033 0%, #330066 50%, #1a0033 100%);
-    padding: 28px 22px; text-align: center;
-    border: 2px solid #ffd700;
-    box-shadow: 0 0 30px rgba(255,215,0,0.3);
-}
-.banner h2 { font-size: 22px; font-weight: 900; color: #ffd700; margin-bottom: 8px; text-shadow: 0 2px 10px rgba(0,0,0,0.7); }
-.banner p { font-size: 13px; color: #ccc; margin-bottom: 16px; }
-.banner button {
-    background: linear-gradient(135deg, #ffd700, #ff9900); color: #111;
-    padding: 14px 36px; border: none; border-radius: 30px;
-    font-size: 15px; font-weight: 900; letter-spacing: 1px;
-    box-shadow: 0 4px 20px rgba(255,215,0,0.6);
-}
-
-/* БАЛАНСЫ */
-.balances { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 16px; }
-.bal-card {
-    background: linear-gradient(135deg, #1a1a1a, #0d0d0d);
-    border: 2px solid #ffd700; border-radius: 16px; padding: 16px; text-align: center;
-}
-.bal-card.blue { border-color: #3366ff; }
-.bal-card .lbl { font-size: 10px; color: #888; letter-spacing: 2px; }
-.bal-card .val { font-size: 24px; font-weight: 900; color: #ffd700; margin-top: 4px; }
-.bal-card.blue .val { color: #66aaff; }
-
-/* СЕКЦИИ */
-.section { background: #141414; border-radius: 18px; padding: 20px; margin: 16px; border: 1px solid #222; }
-.section-title { color: #ffd700; font-size: 15px; font-weight: 900; letter-spacing: 1px; margin-bottom: 14px; }
-
-/* КНОПКИ */
-button { width: 100%; padding: 15px; margin: 6px 0; border: none; border-radius: 14px; font-size: 14px; font-weight: 900; cursor: pointer; letter-spacing: 1px; }
+/* АВТОРИЗАЦИЯ */
+.auth-bg { min-height: 100vh; background: #0a0a0a; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.auth-box { background: #141414; border: 1px solid #222; border-radius: 24px; padding: 32px 24px; width: 100%; max-width: 420px; }
+.auth-logo { text-align: center; font-size: 34px; font-weight: 900; color: #fff; letter-spacing: 3px; margin-bottom: 4px; }
+.auth-sub { text-align: center; font-size: 11px; color: #666; letter-spacing: 5px; margin-bottom: 28px; font-weight: 700; }
+input { width: 100%; padding: 15px 18px; margin: 6px 0; background: #0a0a0a; border: 1px solid #222; border-radius: 16px; color: #fff; font-size: 14px; }
+input:focus { outline: none; border-color: #444; }
+button { width: 100%; padding: 15px; margin: 6px 0; border: none; border-radius: 16px; font-size: 14px; font-weight: 800; cursor: pointer; letter-spacing: 0.5px; }
 button:active { transform: scale(0.97); }
-.btn-gold { background: linear-gradient(135deg, #ffd700, #ff9900); color: #111; }
-.btn-red { background: linear-gradient(135deg, #ff0033, #cc0022); color: #fff; }
-.btn-dark { background: #1a1a1a; color: #ccc; border: 1px solid #333; }
-.btn-green { background: linear-gradient(135deg, #00cc66, #009944); color: #fff; }
-.btn-purple { background: linear-gradient(135deg, #8000ff, #4d0099); color: #fff; }
+.btn-white { background: #fff; color: #111; }
+.btn-dark { background: #1a1a1a; color: #aaa; border: 1px solid #222; }
+.btn-green { background: #00cc66; color: #fff; }
+.btn-purple { background: #7c3aed; color: #fff; }
+.btn-red { background: #ef4444; color: #fff; }
 button:disabled { opacity: 0.4; }
 
-input { width: 100%; padding: 15px; margin: 6px 0; background: #0a0a0a; border: 1px solid #333; border-radius: 14px; color: #fff; font-size: 14px; }
-input:focus { outline: none; border-color: #ffd700; }
+/* ТОП */
+.topbar { background: #0a0a0a; padding: 16px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #1a1a1a; position: sticky; top: 0; z-index: 100; }
+.topbar .back { font-size: 20px; color: #fff; width: 32px; }
+.topbar .title { font-size: 18px; font-weight: 800; color: #fff; flex: 1; }
+.topbar .menu { font-size: 18px; color: #666; }
+
+/* ПРОФИЛЬ ВВЕРХУ */
+.user-header { padding: 16px; display: flex; align-items: center; gap: 14px; }
+.avatar { width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #7c3aed, #ec4899); display: flex; align-items: center; justify-content: center; font-size: 26px; border: 2px solid #222; }
+.user-info { flex: 1; }
+.user-info .name { font-size: 15px; font-weight: 700; color: #fff; }
+.user-info .sub { font-size: 12px; color: #666; margin-top: 2px; }
+.gift-btn { background: linear-gradient(135deg, #7c3aed, #ec4899); color: #fff; padding: 10px 18px; border-radius: 24px; font-size: 13px; font-weight: 800; display: flex; align-items: center; gap: 6px; width: auto; margin: 0; }
+
+/* КАРТОЧКИ БАЛАНСА */
+.bal-section { padding: 0 16px; }
+.bal-label { font-size: 13px; color: #666; margin-bottom: 6px; }
+.bal-value { font-size: 36px; font-weight: 900; color: #fff; display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+.bal-value .coin { font-size: 24px; }
+
+/* СТЕЙКИНГ БЛОК */
+.stake-card { background: #141414; border-radius: 16px; padding: 16px; margin: 0 16px 20px; }
+.stake-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.stake-row .lbl { font-size: 11px; color: #666; letter-spacing: 1px; }
+.stake-row .apy { color: #22c55e; font-weight: 800; font-size: 14px; }
+.stake-desc { font-size: 13px; color: #666; line-height: 1.5; }
+
+/* СЕКЦИИ */
+.section { padding: 0 16px; margin-bottom: 16px; }
+.section-title { font-size: 22px; font-weight: 900; color: #fff; margin-bottom: 14px; }
 
 /* КЕЙСЫ */
 .case-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.case { border-radius: 16px; padding: 20px 12px; text-align: center; cursor: pointer; border: 2px solid; }
-.case .icon { font-size: 42px; }
-.case .name { font-size: 13px; color: #fff; font-weight: 900; margin-top: 6px; }
-.case .price { font-size: 13px; color: #ffd700; margin-top: 6px; font-weight: 900; }
-.case.poor { background: linear-gradient(135deg, #0a0a2a, #1a1a3a); border-color: #4b69ff; }
-.case.medium { background: linear-gradient(135deg, #1a0a2a, #2a1a3a); border-color: #8847ff; }
-.case.cute { background: linear-gradient(135deg, #2a0a2a, #3a1a3a); border-color: #d32ce6; }
-.case.admin { background: linear-gradient(135deg, #2a0a0a, #3a1a1a); border-color: #eb4b4b; }
-.case.rich { background: linear-gradient(135deg, #2a1a0a, #3a2a1a); border-color: #ffd700; grid-column: span 2; }
+.case { background: #141414; border-radius: 16px; padding: 20px 12px; text-align: center; cursor: pointer; border: 1px solid #222; }
+.case .icon { font-size: 40px; }
+.case .name { font-size: 13px; color: #fff; font-weight: 800; margin-top: 8px; }
+.case .price { font-size: 13px; color: #888; margin-top: 4px; }
+.case.rich { grid-column: span 2; }
 
 /* КОЛЕСО */
-.wheel-wrap { position: relative; margin: 20px auto; width: 220px; height: 220px; }
-.wheel { width: 220px; height: 220px; border-radius: 50%; background: conic-gradient(#ff0033 0deg 90deg, #ffd700 90deg 180deg, #00cc66 180deg 270deg, #3366ff 270deg 360deg); display: flex; align-items: center; justify-content: center; font-size: 60px; transition: transform 4s; border: 5px solid #ffd700; box-shadow: 0 0 40px rgba(255,215,0,0.5); }
-.wheel-arrow { position: absolute; top: -16px; left: 50%; transform: translateX(-50%); font-size: 32px; color: #ff0033; }
+.wheel-wrap { position: relative; margin: 20px auto; width: 200px; height: 200px; }
+.wheel { width: 200px; height: 200px; border-radius: 50%; background: conic-gradient(#ef4444 0deg 90deg, #fbbf24 90deg 180deg, #22c55e 180deg 270deg, #3b82f6 270deg 360deg); display: flex; align-items: center; justify-content: center; font-size: 55px; transition: transform 4s; }
+.wheel-arrow { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); font-size: 28px; color: #fff; }
 
 /* СТАТУС */
-.status { text-align: center; font-size: 13px; margin: 10px 0; min-height: 18px; white-space: pre-line; color: #888; }
+.status { text-align: center; font-size: 13px; margin: 10px 16px; min-height: 18px; white-space: pre-line; color: #666; }
 
 /* ПРОФИЛЬ */
-.prof-card { background: linear-gradient(135deg, #1a0a1f, #0a0a0a); border: 2px solid #8000ff; border-radius: 20px; padding: 24px; text-align: center; margin: 16px; }
-.prof-avatar { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, #ff0033, #8000ff); display: flex; align-items: center; justify-content: center; font-size: 40px; margin: 0 auto 12px; border: 3px solid #ffd700; }
-.prof-name { font-size: 20px; color: #ffd700; font-weight: 900; }
+.prof-avatar { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, #7c3aed, #ec4899); display: flex; align-items: center; justify-content: center; font-size: 40px; margin: 0 auto 12px; }
+.prof-name { text-align: center; font-size: 20px; color: #fff; font-weight: 800; }
 
 /* НИЖНЕЕ МЕНЮ */
 .bottom-nav {
-    position: fixed; bottom: 0; left: 0; right: 0;
-    background: linear-gradient(180deg, #0d0d0d, #1a1a1a);
-    border-top: 2px solid #ffd700;
-    display: flex; padding: 10px 0 14px; z-index: 100;
+    position: fixed; bottom: 16px; left: 16px; right: 16px;
+    background: #1a1a1a; border-radius: 28px;
+    display: flex; padding: 10px 8px; z-index: 100;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
 }
 .bottom-nav button {
     flex: 1; background: none; border: none; color: #666;
-    font-size: 10px; font-weight: 900; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 4px; width: auto; margin: 0; border-radius: 0;
+    font-size: 10px; font-weight: 700; display: flex; flex-direction: column;
+    align-items: center; gap: 4px; padding: 6px 0; width: auto; margin: 0;
+    border-radius: 20px;
 }
-.bottom-nav button .ni { font-size: 22px; }
-.bottom-nav button.active { color: #ffd700; }
-
-/* АВТОРИЗАЦИЯ */
-.auth-bg { min-height: 100vh; background: radial-gradient(circle at top, #2a1a00 0%, #0a0a0a 60%); display: flex; align-items: center; justify-content: center; padding: 20px; }
-.auth-box { background: #141414; border: 2px solid #ffd700; border-radius: 24px; padding: 32px 24px; width: 100%; max-width: 420px; box-shadow: 0 0 60px rgba(255,215,0,0.3); }
-.auth-logo { text-align: center; font-size: 36px; font-weight: 900; color: #ffd700; letter-spacing: 4px; margin-bottom: 4px; text-shadow: 0 0 25px rgba(255,215,0,0.8); }
-.auth-sub { text-align: center; font-size: 11px; color: #ff9900; letter-spacing: 6px; margin-bottom: 28px; font-weight: 900; }
+.bottom-nav button .ni { font-size: 20px; }
+.bottom-nav button.active { color: #fff; background: #2a2a2a; }
 </style>
 </head>
 <body>
@@ -117,45 +100,44 @@ input:focus { outline: none; border-color: #ffd700; }
     <div class="auth-box">
         <div class="auth-logo">WINTER</div>
         <div class="auth-sub">CASINO</div>
-        <input type="text" id="username" placeholder="@ Ваш ник (мин 5 симв после @)">
-        <input type="password" id="password" placeholder="🔑 Пароль">
-        <button class="btn-gold" onclick="register()">🎁 РЕГИСТРАЦИЯ (+100 ⭐)</button>
-        <button class="btn-dark" onclick="login()">🔓 ВОЙТИ</button>
-        <button class="btn-purple" onclick="showPage('adminLoginPage')">👑 АДМИН</button>
+        <input type="text" id="username" placeholder="@ Ник (мин 5 симв)">
+        <input type="password" id="password" placeholder="Пароль">
+        <button class="btn-white" onclick="register()">🎁 Регистрация (+100 ⭐)</button>
+        <button class="btn-dark" onclick="login()">Войти</button>
+        <button class="btn-purple" onclick="showPage('adminLoginPage')">👑 Админ</button>
         <div class="status" id="authStatus"></div>
     </div>
 </div>
 
-<!-- АДМИН ВХОД -->
 <div class="auth-bg hidden" id="adminLoginPage">
-    <div class="auth-box" style="border-color:#8000ff;">
-        <div class="auth-logo" style="color:#8000ff;">ADMIN</div>
-        <div class="auth-sub" style="color:#8000ff;">PANEL</div>
-        <input type="password" id="adminPass" placeholder="🔐 Пароль админа">
-        <button class="btn-purple" onclick="adminLogin()">ВОЙТИ</button>
-        <button class="btn-dark" onclick="showPage('authPage')">← НАЗАД</button>
+    <div class="auth-box">
+        <div class="auth-logo">ADMIN</div>
+        <div class="auth-sub">PANEL</div>
+        <input type="password" id="adminPass" placeholder="Пароль админа">
+        <button class="btn-purple" onclick="adminLogin()">Войти</button>
+        <button class="btn-dark" onclick="showPage('authPage')">← Назад</button>
         <div class="status" id="adminLoginStatus"></div>
     </div>
 </div>
 
 <!-- АДМИН ПАНЕЛЬ -->
 <div id="adminPage" class="hidden">
-    <div class="topbar"><div class="logo">ADMIN</div><div class="bonus-badge">👑</div></div>
-    <div class="section">
-        <div class="section-title">📊 СТАТИСТИКА</div>
+    <div class="topbar"><div class="title">ADMIN</div></div>
+    <div class="section" style="margin-top:16px;">
+        <div class="section-title">📊 Статистика</div>
         <div id="adminStats" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"></div>
     </div>
     <div class="section">
-        <div class="section-title">💰 ВЫДАТЬ</div>
+        <div class="section-title">💰 Выдать</div>
         <input type="text" id="adminGiveUser" placeholder="@ Ник">
         <input type="number" id="adminGiveAmount" placeholder="Сумма">
-        <button class="btn-gold" onclick="adminGive()">ВЫДАТЬ</button>
+        <button class="btn-white" onclick="adminGive()">Выдать</button>
     </div>
     <div class="section">
-        <div class="section-title">👥 ЮЗЕРЫ</div>
+        <div class="section-title">👥 Юзеры</div>
         <div id="adminUsersList"></div>
-        <button class="btn-dark" onclick="adminRefresh()">🔄 ОБНОВИТЬ</button>
-        <button class="btn-red" onclick="adminLogout()">🚪 ВЫЙТИ</button>
+        <button class="btn-dark" onclick="adminRefresh()">🔄 Обновить</button>
+        <button class="btn-red" onclick="adminLogout()">🚪 Выйти</button>
         <div class="status" id="adminStatus"></div>
     </div>
 </div>
@@ -163,94 +145,141 @@ input:focus { outline: none; border-color: #ffd700; }
 <!-- ОСНОВНОЕ -->
 <div id="mainPage" class="hidden">
     <div class="topbar">
-        <div class="logo">WINTER</div>
-        <div class="bonus-badge">⭐ <span id="topStars">0</span></div>
+        <div class="back">←</div>
+        <div class="title">TRADE</div>
+        <div class="menu">⋮</div>
     </div>
 
-    <div class="banner">
-        <h2 id="bannerTitle">🎉 БОНУС 100%</h2>
-        <p>Первый депозит удваиваем!</p>
-        <button onclick="showTab('deposit')">ПОЛУЧИТЬ БОНУС</button>
+    <div class="user-header">
+        <div class="avatar">👤</div>
+        <div class="user-info">
+            <div class="name" id="userName">@user</div>
+            <div class="sub">Winter Casino</div>
+        </div>
+        <button class="gift-btn" onclick="showTab('deposit')">🎁 Внести</button>
     </div>
 
-    <div class="balances">
-        <div class="bal-card"><div class="lbl">⭐ ЗВЁЗДЫ</div><div class="val" id="starCount">0</div></div>
-        <div class="bal-card blue"><div class="lbl">💎 ГРАММЫ</div><div class="val" id="gramCount">0</div></div>
+    <div class="bal-section">
+        <div class="bal-label">Заработано</div>
+        <div class="bal-value"><span class="coin">💎</span> <span id="starCount">0</span></div>
+    </div>
+
+    <div class="stake-card">
+        <div class="stake-row">
+            <div class="lbl">ТИП СТЕЙКИНГА</div>
+            <div class="apy">54% APY</div>
+        </div>
+        <div class="stake-desc">Выставляйте предметы на продажу и получайте процент от дохода сервиса</div>
+    </div>
+
+    <div class="section" style="margin-bottom:10px;">
+        <div class="section-title">⭐ Звёзды</div>
+        <div style="font-size:26px;font-weight:900;color:#fbbf24;display:flex;align-items:center;gap:8px;">
+            <span id="topStars">0</span> <span style="font-size:16px;color:#888;">⭐</span>
+        </div>
+    </div>
+
+    <div class="section" style="margin-bottom:16px;">
+        <div class="section-title">💎 Граммы</div>
+        <div style="font-size:26px;font-weight:900;color:#3b82f6;display:flex;align-items:center;gap:8px;">
+            <span id="gramCount">0</span> <span style="font-size:16px;color:#888;">💎</span>
+        </div>
     </div>
 
     <div class="status" id="mainStatus"></div>
 
     <div id="tab-wheel">
         <div class="section">
-            <div class="section-title">🎡 КОЛЕСО УДАЧИ</div>
+            <div class="section-title">🎡 Колесо удачи</div>
             <div class="wheel-wrap"><div class="wheel-arrow">▼</div><div class="wheel" id="wheelEl">🎰</div></div>
             <div class="status" id="wheelTimer"></div>
-            <button class="btn-gold" onclick="spinWheel()" id="wheelBtn">🎡 КРУТИТЬ</button>
+            <button class="btn-white" onclick="spinWheel()" id="wheelBtn">🎡 Крутить</button>
         </div>
     </div>
 
     <div id="tab-cases" class="hidden">
         <div class="section">
-            <div class="section-title">📦 КЕЙСЫ</div>
+            <div class="section-title">📦 Кейсы</div>
             <div class="case-grid">
-                <div class="case poor" onclick="openCase('poor')"><div class="icon">🗑️</div><div class="name">НИЩИЙ</div><div class="price">50 ⭐</div></div>
-                <div class="case medium" onclick="openCase('medium')"><div class="icon">📦</div><div class="name">СРЕДНИЙ</div><div class="price">100 ⭐</div></div>
-                <div class="case cute" onclick="openCase('cute')"><div class="icon">🎀</div><div class="name">НЯШНЫЙ</div><div class="price">250 ⭐</div></div>
-                <div class="case admin" onclick="openCase('admin')"><div class="icon">🛡️</div><div class="name">АДМИН</div><div class="price">500 ⭐</div></div>
-                <div class="case rich" onclick="openCase('rich')"><div class="icon">💎</div><div class="name">БОГАЧ</div><div class="price">1000 ⭐</div></div>
+                <div class="case" onclick="openCase('poor')"><div class="icon">🗑️</div><div class="name">Нищий</div><div class="price">50 ⭐</div></div>
+                <div class="case" onclick="openCase('medium')"><div class="icon">📦</div><div class="name">Средний</div><div class="price">100 ⭐</div></div>
+                <div class="case" onclick="openCase('cute')"><div class="icon">🎀</div><div class="name">Няшный</div><div class="price">250 ⭐</div></div>
+                <div class="case" onclick="openCase('admin')"><div class="icon">🛡️</div><div class="name">Админ</div><div class="price">500 ⭐</div></div>
+                <div class="case rich" onclick="openCase('rich')"><div class="icon">💎</div><div class="name">Богач</div><div class="price">1000 ⭐</div></div>
             </div>
         </div>
     </div>
 
     <div id="tab-promo" class="hidden">
         <div class="section">
-            <div class="section-title">🎁 ПРОМОКОД</div>
+            <div class="section-title">🎁 Промокод</div>
             <input type="text" id="promoInput" placeholder="Введите промокод">
-            <button class="btn-gold" onclick="usePromo()">✅ АКТИВИРОВАТЬ</button>
+            <button class="btn-white" onclick="usePromo()">Активировать</button>
             <div class="status" id="promoStatus"></div>
         </div>
     </div>
 
     <div id="tab-exchange" class="hidden">
         <div class="section">
-            <div class="section-title">💎 ОБМЕН</div>
-            <div class="status">1000 звёзд = 1 грамм</div>
+            <div class="section-title">💎 Обмен</div>
+            <div class="stake-card" style="margin:0 0 12px;">
+                <div class="stake-desc">1000 звёзд = 1 грамм</div>
+            </div>
             <input type="number" id="exchangeAmount" placeholder="Сумма (кратно 1000)" step="1000">
-            <button class="btn-gold" onclick="exchange()">💎 ОБМЕНЯТЬ</button>
+            <button class="btn-white" onclick="exchange()">Обменять</button>
             <div class="status" id="exchangeStatus"></div>
         </div>
     </div>
 
     <div id="tab-deposit" class="hidden">
         <div class="section">
-            <div class="section-title">💳 ПОПОЛНЕНИЕ</div>
-            <div class="status">Напишите в Wintegramm: <b style="color:#ffd700;">@referator</b><br><br>Скажите число ⭐<br><br>1 ⭐ = 10 звёзд здесь</div>
+            <div class="section-title">💳 Пополнение</div>
+            <div class="stake-card" style="margin:0;">
+                <div class="stake-desc">Напишите в Wintegramm: <b style="color:#7c3aed;">@referator</b><br><br>Скажите число ⭐<br><br>1 ⭐ = 10 звёзд здесь</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="tab-withdraw" class="hidden">
+        <div class="section">
+            <div class="section-title">💸 Вывод</div>
+            <div class="stake-card" style="margin:0 0 12px;">
+                <div class="stake-desc">Напишите в Wintegramm: <b style="color:#7c3aed;">@referator</b><br><br>Скажите: <b>Вывод</b><br>И укажите ваш баланс<br><br><b>Минимум: 1000 ⭐</b></div>
+            </div>
+            <input type="number" id="withdrawAmount" placeholder="Сумма (мин 1000)">
+            <button class="btn-white" onclick="withdraw()">Создать заявку</button>
+            <div class="status" id="withdrawStatus"></div>
         </div>
     </div>
 
     <div id="tab-profile" class="hidden">
-        <div class="prof-card">
+        <div style="padding:20px 16px;">
             <div class="prof-avatar">👤</div>
             <div class="prof-name" id="profileName">@user</div>
-        </div>
-        <div class="balances">
-            <div class="bal-card"><div class="lbl">⭐ ЗВЁЗДЫ</div><div class="val" id="profileStars">0</div></div>
-            <div class="bal-card blue"><div class="lbl">💎 ГРАММЫ</div><div class="val" id="profileGrams">0</div></div>
+            <div class="status" id="profileUid"></div>
         </div>
         <div class="section">
-            <button class="btn-dark" onclick="refreshProfile()">🔄 ОБНОВИТЬ</button>
-            <button class="btn-red" onclick="logout()">🚪 ВЫЙТИ</button>
+            <div class="section-title">⭐ Звёзды</div>
+            <div style="font-size:26px;font-weight:900;color:#fbbf24;"><span id="profileStars">0</span></div>
+        </div>
+        <div class="section">
+            <div class="section-title">💎 Граммы</div>
+            <div style="font-size:26px;font-weight:900;color:#3b82f6;"><span id="profileGrams">0</span></div>
+        </div>
+        <div class="section">
+            <button class="btn-dark" onclick="refreshProfile()">🔄 Обновить</button>
+            <button class="btn-red" onclick="logout()">🚪 Выйти</button>
         </div>
     </div>
 </div>
 
 <!-- НИЖНЕЕ МЕНЮ -->
 <div class="bottom-nav hidden" id="bottomNav">
-    <button class="active" onclick="showTab('wheel', this)" id="nav-wheel"><div class="ni">🎡</div>КОЛЕСО</button>
-    <button onclick="showTab('cases', this)" id="nav-cases"><div class="ni">📦</div>КЕЙСЫ</button>
-    <button onclick="showTab('promo', this)" id="nav-promo"><div class="ni">🎁</div>ПРОМО</button>
-    <button onclick="showTab('exchange', this)" id="nav-exchange"><div class="ni">💎</div>ОБМЕН</button>
-    <button onclick="showTab('profile', this)" id="nav-profile"><div class="ni">👤</div>ПРОФИЛЬ</button>
+    <button class="active" onclick="showTab('wheel', this)" id="nav-wheel"><div class="ni">🎡</div>Колесо</button>
+    <button onclick="showTab('cases', this)" id="nav-cases"><div class="ni">📦</div>Кейсы</button>
+    <button onclick="showTab('deposit', this)" id="nav-deposit"><div class="ni">💳</div>Внести</button>
+    <button onclick="showTab('withdraw', this)" id="nav-withdraw"><div class="ni">💸</div>Вывод</button>
+    <button onclick="showTab('profile', this)" id="nav-profile"><div class="ni">👤</div>Профиль</button>
 </div>
 
 <script>
@@ -263,7 +292,7 @@ async function api(url, data) {
 }
 function st(id, msg, color) {
     const e = document.getElementById(id);
-    if (e) { e.innerText = msg; e.style.color = color || '#888'; }
+    if (e) { e.innerText = msg; e.style.color = color || '#666'; }
 }
 function showPage(id) {
     ['authPage', 'adminLoginPage', 'adminPage', 'mainPage'].forEach(p => {
@@ -272,15 +301,15 @@ function showPage(id) {
     });
     const target = document.getElementById(id);
     if (target) target.classList.remove('hidden');
-    const isAuth = (id === 'authPage' || id === 'adminLoginPage');
+    const isAuth = (id === 'authPage' || id === 'adminLoginPage' || id === 'adminPage');
     const nav = document.getElementById('bottomNav');
-    if (nav) nav.classList.toggle('hidden', isAuth || id === 'adminPage');
+    if (nav) nav.classList.toggle('hidden', isAuth);
 }
 async function register() {
     const u = document.getElementById('username').value.trim();
     const p = document.getElementById('password').value;
     const r = await api('/api/register', { username: u, password: p });
-    if (!r.ok) return st('authStatus', '❌ ' + r.error, '#ff3355');
+    if (!r.ok) return st('authStatus', '❌ ' + r.error, '#ef4444');
     token = r.token; localStorage.setItem('token', token);
     enter();
 }
@@ -288,7 +317,7 @@ async function login() {
     const u = document.getElementById('username').value.trim();
     const p = document.getElementById('password').value;
     const r = await api('/api/login', { username: u, password: p });
-    if (!r.ok) return st('authStatus', '❌ ' + r.error, '#ff3355');
+    if (!r.ok) return st('authStatus', '❌ ' + r.error, '#ef4444');
     token = r.token; localStorage.setItem('token', token);
     enter();
 }
@@ -302,27 +331,28 @@ function logout() {
 }
 async function refreshProfile() {
     const r = await api('/api/profile', { token });
-    if (!r.ok) return st('mainStatus', '❌ ' + r.error, '#ff3355');
+    if (!r.ok) return st('mainStatus', '❌ ' + r.error, '#ef4444');
     document.getElementById('starCount').innerText = r.stars;
     document.getElementById('gramCount').innerText = r.grams || 0;
     document.getElementById('topStars').innerText = r.stars;
     document.getElementById('profileStars').innerText = r.stars;
     document.getElementById('profileGrams').innerText = r.grams || 0;
+    document.getElementById('userName').innerText = r.username;
     document.getElementById('profileName').innerText = r.username;
     const left = r.wheelLeft;
     const t = document.getElementById('wheelTimer');
     const b = document.getElementById('wheelBtn');
-    if (left <= 0) { b.disabled = false; t.innerText = '✅ Доступно!'; t.style.color = '#00cc66'; }
+    if (left <= 0) { b.disabled = false; t.innerText = '✅ Доступно!'; t.style.color = '#22c55e'; }
     else {
         b.disabled = true;
         const h = Math.floor(left / 3600000);
         const m = Math.floor((left % 3600000) / 60000);
         t.innerText = '⏳ ' + h + 'ч ' + m + 'м';
-        t.style.color = '#ff9900';
+        t.style.color = '#fbbf24';
     }
 }
 function showTab(tab, btn) {
-    ['wheel', 'cases', 'promo', 'exchange', 'deposit', 'profile'].forEach(t => {
+    ['wheel', 'cases', 'promo', 'exchange', 'deposit', 'withdraw', 'profile'].forEach(t => {
         const el = document.getElementById('tab-' + t);
         if (el) el.classList.add('hidden');
     });
@@ -336,37 +366,44 @@ async function spinWheel() {
     w.style.transform = 'rotate(1080deg)';
     setTimeout(async () => {
         const r = await api('/api/wheel', { token });
-        if (!r.ok) { st('mainStatus', '❌ ' + r.error, '#ff3355'); w.style.transform = 'rotate(0deg)'; return; }
-        st('mainStatus', '🎉 Выпало: ' + r.prize + ' ⭐', '#00cc66');
+        if (!r.ok) { st('mainStatus', '❌ ' + r.error, '#ef4444'); w.style.transform = 'rotate(0deg)'; return; }
+        st('mainStatus', '🎉 Выпало: ' + r.prize + ' ⭐', '#22c55e');
         refreshProfile();
     }, 4100);
 }
 async function openCase(t) {
     const r = await api('/api/case', { token, caseType: t });
-    if (!r.ok) return st('mainStatus', '❌ ' + r.error, '#ff3355');
-    st('mainStatus', '🎁 Из кейса: ' + r.prize + ' ⭐', '#00cc66');
+    if (!r.ok) return st('mainStatus', '❌ ' + r.error, '#ef4444');
+    st('mainStatus', '🎁 Из кейса: ' + r.prize + ' ⭐', '#22c55e');
     refreshProfile();
 }
 async function usePromo() {
     const code = document.getElementById('promoInput').value.trim();
-    if (!code) return st('promoStatus', '❌ Введите промокод', '#ff3355');
+    if (!code) return st('promoStatus', '❌ Введите промокод', '#ef4444');
     const r = await api('/api/promo', { token, code });
-    if (!r.ok) return st('promoStatus', '❌ ' + r.error, '#ff3355');
-    st('promoStatus', '✅ +' + r.amount + ' ⭐', '#00cc66');
+    if (!r.ok) return st('promoStatus', '❌ ' + r.error, '#ef4444');
+    st('promoStatus', '✅ +' + r.amount + ' ⭐', '#22c55e');
     document.getElementById('promoInput').value = '';
     refreshProfile();
 }
 async function exchange() {
     const amount = parseInt(document.getElementById('exchangeAmount').value);
     const r = await api('/api/exchange', { token, stars: amount });
-    if (!r.ok) return st('exchangeStatus', '❌ ' + r.error, '#ff3355');
-    st('exchangeStatus', '✅ +' + r.exchanged + ' 💎', '#00cc66');
+    if (!r.ok) return st('exchangeStatus', '❌ ' + r.error, '#ef4444');
+    st('exchangeStatus', '✅ +' + r.exchanged + ' 💎', '#22c55e');
+    refreshProfile();
+}
+async function withdraw() {
+    const amount = parseInt(document.getElementById('withdrawAmount').value);
+    const r = await api('/api/withdraw', { token, amount });
+    if (!r.ok) return st('withdrawStatus', '❌ ' + r.error, '#ef4444');
+    st('withdrawStatus', '✅ ' + r.message, '#22c55e');
     refreshProfile();
 }
 async function adminLogin() {
     const p = document.getElementById('adminPass').value;
     const r = await api('/api/admin/login', { password: p });
-    if (!r.ok) return st('adminLoginStatus', '❌ ' + r.error, '#ff3355');
+    if (!r.ok) return st('adminLoginStatus', '❌ ' + r.error, '#ef4444');
     adminPass = p;
     showPage('adminPage');
     adminRefresh();
@@ -374,20 +411,20 @@ async function adminLogin() {
 function adminLogout() { adminPass = ''; showPage('authPage'); }
 async function adminRefresh() {
     const s = await api('/api/admin/stats', { password: adminPass });
-    if (!s.ok) return st('adminStatus', '❌ ' + s.error, '#ff3355');
+    if (!s.ok) return st('adminStatus', '❌ ' + s.error, '#ef4444');
     document.getElementById('adminStats').innerHTML =
-        '<div class="bal-card" style="padding:12px;"><div class="val">' + s.usersCount + '</div><div class="lbl">Игроков</div></div>' +
-        '<div class="bal-card" style="padding:12px;"><div class="val">' + s.totalStars + '</div><div class="lbl">Всего ⭐</div></div>' +
-        '<div class="bal-card" style="padding:12px;"><div class="val">' + s.adminBalance + '</div><div class="lbl">Комиссия</div></div>' +
-        '<div class="bal-card" style="padding:12px;"><div class="val">' + s.banned + '</div><div class="lbl">Бан</div></div>';
+        '<div class="stake-card" style="margin:0;text-align:center;padding:12px;"><div style="font-size:20px;font-weight:900;color:#fff;">' + s.usersCount + '</div><div style="font-size:11px;color:#666;">Игроков</div></div>' +
+        '<div class="stake-card" style="margin:0;text-align:center;padding:12px;"><div style="font-size:20px;font-weight:900;color:#fbbf24;">' + s.totalStars + '</div><div style="font-size:11px;color:#666;">Всего ⭐</div></div>' +
+        '<div class="stake-card" style="margin:0;text-align:center;padding:12px;"><div style="font-size:20px;font-weight:900;color:#22c55e;">' + s.adminBalance + '</div><div style="font-size:11px;color:#666;">Комиссия</div></div>' +
+        '<div class="stake-card" style="margin:0;text-align:center;padding:12px;"><div style="font-size:20px;font-weight:900;color:#ef4444;">' + s.banned + '</div><div style="font-size:11px;color:#666;">Бан</div></div>';
     const u = await api('/api/admin/users', { password: adminPass });
     if (!u.ok) return;
     document.getElementById('adminUsersList').innerHTML = u.users.map(x =>
-        '<div style="background:#1a1a1a;padding:10px;border-radius:10px;margin:6px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:5px;">' +
-        '<div><b>' + x.username + '</b> — ' + x.stars + ' ⭐ ' + (x.banned ? '🚫' : '') + '</div>' +
+        '<div style="background:#141414;padding:12px;border-radius:12px;margin:6px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:5px;">' +
+        '<div style="font-size:13px;"><b>' + x.username + '</b> — ' + x.stars + ' ⭐ ' + (x.banned ? '🚫' : '') + '</div>' +
         '<div>' +
-        '<button class="btn-green" style="width:auto;padding:5px 10px;font-size:11px;margin:0;" onclick="quickGive(\'' + x.username + '\',1000)">+1000</button> ' +
-        '<button class="btn-red" style="width:auto;padding:5px 10px;font-size:11px;margin:0;" onclick="toggleBan(\'' + x.username + '\',' + (!x.banned) + ')">' + (x.banned ? 'Разбан' : 'Бан') + '</button>' +
+        '<button class="btn-green" style="width:auto;padding:5px 10px;font-size:11px;margin:0;display:inline-block;" onclick="quickGive(\'' + x.username + '\',1000)">+1000</button> ' +
+        '<button class="btn-red" style="width:auto;padding:5px 10px;font-size:11px;margin:0;display:inline-block;" onclick="toggleBan(\'' + x.username + '\',' + (!x.banned) + ')">' + (x.banned ? 'Разбан' : 'Бан') + '</button>' +
         '</div></div>'
     ).join('');
 }
@@ -395,8 +432,8 @@ async function adminGive() {
     const u = document.getElementById('adminGiveUser').value.trim();
     const a = parseInt(document.getElementById('adminGiveAmount').value);
     const r = await api('/api/admin/give', { password: adminPass, username: u, amount: a });
-    if (!r.ok) return st('adminStatus', '❌ ' + r.error, '#ff3355');
-    st('adminStatus', '✅ Выдано. Баланс: ' + r.stars, '#00cc66');
+    if (!r.ok) return st('adminStatus', '❌ ' + r.error, '#ef4444');
+    st('adminStatus', '✅ Выдано. Баланс: ' + r.stars, '#22c55e');
     adminRefresh();
 }
 async function quickGive(u, a) { await api('/api/admin/give', { password: adminPass, username: u, amount: a }); adminRefresh(); }
