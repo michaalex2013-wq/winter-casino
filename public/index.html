@@ -2,141 +2,254 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Winter Casino</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Winter Gift</title>
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
-body { background: #0a0a0a; color: #fff; min-height: 100vh; padding-bottom: 100px; }
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, 'Inter', Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
+body { background: #050507; color: #fff; min-height: 100vh; padding-bottom: 110px; overflow-x: hidden; }
 .hidden { display: none !important; }
 
+/* ФОНОВЫЕ ПЯТНА */
+body::before {
+    content: ''; position: fixed; top: -200px; left: -100px;
+    width: 400px; height: 400px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(168,85,247,0.15), transparent 70%);
+    z-index: -1; filter: blur(40px);
+}
+body::after {
+    content: ''; position: fixed; bottom: -200px; right: -100px;
+    width: 400px; height: 400px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(236,72,153,0.12), transparent 70%);
+    z-index: -1; filter: blur(40px);
+}
+
 /* АВТОРИЗАЦИЯ */
-.auth-bg { min-height: 100vh; background: radial-gradient(circle at top, #1a0a2a 0%, #0a0a0a 70%); display: flex; align-items: center; justify-content: center; padding: 20px; }
-.auth-box { background: #141414; border: 1px solid #222; border-radius: 28px; padding: 36px 26px; width: 100%; max-width: 420px; box-shadow: 0 0 60px rgba(124,58,237,0.15); }
-.auth-logo { text-align: center; font-size: 36px; font-weight: 900; color: #fff; letter-spacing: 3px; margin-bottom: 4px; }
-.auth-sub { text-align: center; font-size: 11px; color: #7c3aed; letter-spacing: 6px; margin-bottom: 30px; font-weight: 800; }
-input { width: 100%; padding: 16px 18px; margin: 6px 0; background: #0a0a0a; border: 1px solid #222; border-radius: 18px; color: #fff; font-size: 14px; }
-input:focus { outline: none; border-color: #7c3aed; box-shadow: 0 0 15px rgba(124,58,237,0.3); }
-button { width: 100%; padding: 16px; margin: 6px 0; border: none; border-radius: 18px; font-size: 14px; font-weight: 800; cursor: pointer; letter-spacing: 0.5px; }
+.auth-bg { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.auth-box {
+    background: rgba(20,20,25,0.8);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(168,85,247,0.3);
+    border-radius: 28px; padding: 36px 26px;
+    width: 100%; max-width: 420px;
+    box-shadow: 0 0 80px rgba(168,85,247,0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+}
+.auth-logo {
+    text-align: center; font-size: 38px; font-weight: 900;
+    background: linear-gradient(135deg, #a855f7, #ec4899);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    letter-spacing: 2px; margin-bottom: 4px;
+}
+.auth-sub { text-align: center; font-size: 11px; color: #a855f7; letter-spacing: 6px; margin-bottom: 30px; font-weight: 800; }
+input {
+    width: 100%; padding: 16px 20px; margin: 6px 0;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 18px; color: #fff; font-size: 14px;
+    transition: all 0.2s;
+}
+input:focus { outline: none; border-color: #a855f7; box-shadow: 0 0 20px rgba(168,85,247,0.3); }
+button {
+    width: 100%; padding: 16px; margin: 6px 0; border: none;
+    border-radius: 18px; font-size: 14px; font-weight: 800;
+    cursor: pointer; transition: all 0.15s;
+}
 button:active { transform: scale(0.97); }
-.btn-white { background: #fff; color: #111; }
-.btn-dark { background: #1a1a1a; color: #aaa; border: 1px solid #222; }
+.btn-primary {
+    background: linear-gradient(135deg, #a855f7, #ec4899);
+    color: #fff; box-shadow: 0 8px 30px rgba(168,85,247,0.5);
+}
+.btn-glass {
+    background: rgba(255,255,255,0.05);
+    color: #ccc; border: 1px solid rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+}
 .btn-green { background: #22c55e; color: #fff; }
-.btn-purple { background: linear-gradient(135deg, #7c3aed, #ec4899); color: #fff; }
 .btn-red { background: #ef4444; color: #fff; }
 button:disabled { opacity: 0.4; }
 
 /* ТОП */
-.topbar { background: #0a0a0a; padding: 16px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #1a1a1a; position: sticky; top: 0; z-index: 100; }
-.topbar .back { font-size: 20px; color: #fff; width: 32px; }
-.topbar .title { font-size: 18px; font-weight: 900; color: #fff; flex: 1; letter-spacing: 1px; }
-.topbar .menu { font-size: 20px; color: #666; }
+.topbar {
+    padding: 20px 18px 12px;
+    display: flex; align-items: center; gap: 12px;
+}
+.topbar .back { font-size: 22px; color: #fff; width: 32px; }
+.topbar .title { font-size: 17px; font-weight: 800; flex: 1; letter-spacing: 0.5px; color: #fff; }
+.topbar .dots { font-size: 22px; color: #666; }
 
-/* ПРОФИЛЬ ВВЕРХУ */
-.user-header { padding: 20px 16px; display: flex; align-items: center; gap: 14px; }
-.avatar { width: 58px; height: 58px; border-radius: 50%; background: linear-gradient(135deg, #7c3aed, #ec4899); display: flex; align-items: center; justify-content: center; font-size: 26px; border: 2px solid #222; box-shadow: 0 0 20px rgba(124,58,237,0.4); }
+/* ЮЗЕР ХЕДЕР */
+.user-header {
+    padding: 8px 18px 24px;
+    display: flex; align-items: center; gap: 14px;
+}
+.avatar {
+    width: 62px; height: 62px; border-radius: 50%;
+    background: linear-gradient(135deg, #a855f7, #ec4899);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+    border: 2px solid rgba(255,255,255,0.1);
+    box-shadow: 0 0 30px rgba(168,85,247,0.5);
+}
 .user-info { flex: 1; }
-.user-info .name { font-size: 16px; font-weight: 800; color: #fff; }
-.user-info .sub { font-size: 12px; color: #666; margin-top: 2px; }
-.gift-btn { background: linear-gradient(135deg, #7c3aed, #ec4899); color: #fff; padding: 12px 20px; border-radius: 26px; font-size: 13px; font-weight: 900; display: flex; align-items: center; gap: 6px; width: auto; margin: 0; box-shadow: 0 4px 20px rgba(124,58,237,0.5); }
+.user-info .name { font-size: 17px; font-weight: 900; color: #fff; }
+.user-info .sub { font-size: 12px; color: #666; margin-top: 3px; display: flex; align-items: center; gap: 6px; }
+.user-info .sub::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 8px #22c55e; }
+.gift-btn {
+    background: linear-gradient(135deg, #a855f7, #ec4899);
+    color: #fff; padding: 12px 18px; border-radius: 26px;
+    font-size: 12px; font-weight: 900;
+    display: flex; align-items: center; gap: 6px;
+    width: auto; margin: 0;
+    box-shadow: 0 8px 30px rgba(236,72,153,0.4);
+}
 
 /* БАЛАНС КРУПНЫЙ */
-.bal-main { padding: 8px 16px 20px; }
-.bal-main .lbl { font-size: 13px; color: #666; margin-bottom: 8px; letter-spacing: 0.5px; }
-.bal-main .val { font-size: 42px; font-weight: 900; color: #fff; display: flex; align-items: center; gap: 10px; }
-.bal-main .val .coin { font-size: 28px; }
+.bal-main { padding: 0 18px 20px; }
+.bal-main .lbl { font-size: 12px; color: #666; margin-bottom: 8px; letter-spacing: 1px; font-weight: 700; text-transform: uppercase; }
+.bal-main .val { font-size: 44px; font-weight: 900; display: flex; align-items: center; gap: 12px; color: #fff; }
+.bal-main .val .coin {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: linear-gradient(135deg, #a855f7, #ec4899);
+    display: flex; align-items: center; justify-content: center; font-size: 20px;
+    box-shadow: 0 0 20px rgba(168,85,247,0.6);
+}
 
-/* СТЕЙКИНГ */
-.stake-card { background: #141414; border-radius: 20px; padding: 18px; margin: 0 16px 20px; border: 1px solid #1f1f1f; }
+/* СТЕКЛЯННАЯ КАРТОЧКА */
+.glass {
+    background: rgba(20,20,25,0.6);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 22px; padding: 18px;
+    margin: 0 18px 16px;
+}
 .stake-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-.stake-row .lbl { font-size: 11px; color: #666; letter-spacing: 1.5px; font-weight: 700; }
+.stake-row .lbl { font-size: 10px; color: #666; letter-spacing: 1.5px; font-weight: 800; text-transform: uppercase; }
 .stake-row .apy { color: #22c55e; font-weight: 900; font-size: 15px; }
 .stake-desc { font-size: 13px; color: #888; line-height: 1.6; }
 
-/* СЕКЦИИ */
-.section { padding: 0 16px; margin-bottom: 18px; }
-.section-title { font-size: 22px; font-weight: 900; color: #fff; margin-bottom: 16px; letter-spacing: 0.5px; }
-
 /* БАЛАНС-КАРТОЧКИ */
-.bal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 16px; margin-bottom: 20px; }
-.bal-card { background: #141414; border-radius: 20px; padding: 18px; border: 1px solid #1f1f1f; position: relative; overflow: hidden; }
-.bal-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #fbbf24, #f59e0b); }
-.bal-card.blue::before { background: linear-gradient(90deg, #3b82f6, #2563eb); }
-.bal-card .lbl { font-size: 11px; color: #666; letter-spacing: 1px; font-weight: 700; }
-.bal-card .val { font-size: 26px; font-weight: 900; color: #fbbf24; margin-top: 6px; display: flex; align-items: center; gap: 6px; }
-.bal-card.blue .val { color: #3b82f6; }
+.bal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 18px; margin-bottom: 20px; }
+.bal-card {
+    background: rgba(20,20,25,0.6);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 22px; padding: 18px;
+    position: relative; overflow: hidden;
+}
+.bal-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, #a855f7, #ec4899);
+}
+.bal-card.blue::before { background: linear-gradient(90deg, #3b82f6, #06b6d4); }
+.bal-card .lbl { font-size: 10px; color: #666; letter-spacing: 1.5px; font-weight: 800; }
+.bal-card .val { font-size: 28px; font-weight: 900; color: #a855f7; margin-top: 8px; }
+.bal-card.blue .val { color: #06b6d4; }
+
+/* СЕКЦИИ */
+.section { padding: 0 18px; margin-bottom: 18px; }
+.section-title { font-size: 24px; font-weight: 900; color: #fff; margin-bottom: 16px; letter-spacing: -0.5px; }
 
 /* КЕЙСЫ */
 .case-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.case { background: #141414; border-radius: 20px; padding: 22px 14px; text-align: center; cursor: pointer; border: 1px solid #1f1f1f; transition: transform 0.15s, border-color 0.2s; }
-.case:active { transform: scale(0.96); border-color: #7c3aed; }
-.case .icon { font-size: 44px; }
-.case .name { font-size: 13px; color: #fff; font-weight: 800; margin-top: 10px; }
-.case .price { font-size: 13px; color: #7c3aed; margin-top: 6px; font-weight: 800; }
+.case {
+    background: rgba(20,20,25,0.6);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 22px; padding: 24px 14px;
+    text-align: center; cursor: pointer;
+    transition: all 0.2s;
+    position: relative; overflow: hidden;
+}
+.case:active { transform: scale(0.96); border-color: #a855f7; }
+.case::before {
+    content: ''; position: absolute; top: -50%; left: -50%;
+    width: 200%; height: 200%; 
+    background: radial-gradient(circle, rgba(168,85,247,0.1), transparent 60%);
+    pointer-events: none;
+}
+.case .icon { font-size: 46px; margin-bottom: 10px; }
+.case .name { font-size: 13px; color: #fff; font-weight: 900; }
+.case .price { font-size: 13px; color: #a855f7; margin-top: 6px; font-weight: 900; }
 .case.rich { grid-column: span 2; }
 
 /* КОЛЕСО */
-.wheel-wrap { position: relative; margin: 20px auto; width: 210px; height: 210px; }
-.wheel { width: 210px; height: 210px; border-radius: 50%; background: conic-gradient(#ef4444 0deg 90deg, #fbbf24 90deg 180deg, #22c55e 180deg 270deg, #3b82f6 270deg 360deg); display: flex; align-items: center; justify-content: center; font-size: 58px; transition: transform 4s; border: 3px solid #222; }
-.wheel-arrow { position: absolute; top: -16px; left: 50%; transform: translateX(-50%); font-size: 30px; color: #fff; filter: drop-shadow(0 2px 6px #000); }
+.wheel-wrap { position: relative; margin: 20px auto; width: 220px; height: 220px; }
+.wheel {
+    width: 220px; height: 220px; border-radius: 50%;
+    background: conic-gradient(#ef4444 0deg 90deg, #fbbf24 90deg 180deg, #22c55e 180deg 270deg, #3b82f6 270deg 360deg);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 60px; transition: transform 4s cubic-bezier(0.15, 0.7, 0.3, 1);
+    border: 4px solid rgba(255,255,255,0.1);
+    box-shadow: 0 0 60px rgba(168,85,247,0.4), inset 0 0 40px rgba(0,0,0,0.5);
+}
+.wheel-arrow { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 32px; color: #fff; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.8)); }
 
 /* СТАТУС */
-.status { text-align: center; font-size: 13px; margin: 10px 16px; min-height: 18px; white-space: pre-line; color: #666; }
+.status { text-align: center; font-size: 13px; margin: 10px 18px; min-height: 18px; white-space: pre-line; color: #666; }
 
 /* ПРОФИЛЬ */
-.prof-avatar { width: 90px; height: 90px; border-radius: 50%; background: linear-gradient(135deg, #7c3aed, #ec4899); display: flex; align-items: center; justify-content: center; font-size: 44px; margin: 0 auto 14px; box-shadow: 0 0 30px rgba(124,58,237,0.5); }
-.prof-name { text-align: center; font-size: 22px; color: #fff; font-weight: 900; }
-
-/* ВАЛЮТА ПАНЕЛИ */
-.currency-panel { background: #141414; border-radius: 20px; padding: 18px; margin: 0 16px 14px; border: 1px solid #1f1f1f; }
-.currency-panel .cur-title { font-size: 11px; color: #666; letter-spacing: 1.5px; font-weight: 700; margin-bottom: 6px; }
-.currency-panel .cur-val { font-size: 32px; font-weight: 900; }
-.currency-panel.gold .cur-val { color: #fbbf24; }
-.currency-panel.blue .cur-val { color: #3b82f6; }
+.prof-avatar {
+    width: 100px; height: 100px; border-radius: 50%;
+    background: linear-gradient(135deg, #a855f7, #ec4899);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 48px; margin: 0 auto 16px;
+    box-shadow: 0 0 50px rgba(168,85,247,0.6);
+    border: 3px solid rgba(255,255,255,0.1);
+}
+.prof-name { text-align: center; font-size: 24px; color: #fff; font-weight: 900; }
 
 /* НИЖНЕЕ МЕНЮ */
 .bottom-nav {
     position: fixed; bottom: 16px; left: 16px; right: 16px;
-    background: #1a1a1a; border-radius: 30px;
+    background: rgba(20,20,25,0.85);
+    backdrop-filter: blur(30px);
+    border-radius: 30px;
     display: flex; padding: 10px 8px; z-index: 100;
-    box-shadow: 0 12px 40px rgba(0,0,0,0.8);
-    border: 1px solid #222;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.06);
 }
 .bottom-nav button {
     flex: 1; background: none; border: none; color: #666;
     font-size: 10px; font-weight: 800; display: flex; flex-direction: column;
-    align-items: center; gap: 4px; padding: 8px 0; width: auto; margin: 0;
-    border-radius: 22px; transition: all 0.2s;
+    align-items: center; gap: 5px; padding: 8px 0; width: auto; margin: 0;
+    border-radius: 22px; transition: all 0.25s;
 }
-.bottom-nav button .ni { font-size: 20px; }
-.bottom-nav button.active { color: #fff; background: #2a2a2a; }
+.bottom-nav button .ni { font-size: 22px; }
+.bottom-nav button.active {
+    color: #fff;
+    background: linear-gradient(135deg, rgba(168,85,247,0.3), rgba(236,72,153,0.3));
+    box-shadow: 0 0 20px rgba(168,85,247,0.3);
+}
 </style>
 </head>
 <body>
 
+<!-- АВТОРИЗАЦИЯ -->
 <div class="auth-bg" id="authPage">
     <div class="auth-box">
         <div class="auth-logo">WINTER</div>
-        <div class="auth-sub">CASINO</div>
+        <div class="auth-sub">GIFT · 2026</div>
         <input type="text" id="username" placeholder="@ Ник (мин 5 симв)">
         <input type="password" id="password" placeholder="Пароль">
-        <button class="btn-white" onclick="register()">🎁 Регистрация (+100 ⭐)</button>
-        <button class="btn-dark" onclick="login()">Войти</button>
-        <button class="btn-purple" onclick="showPage('adminLoginPage')">👑 Админ</button>
+        <button class="btn-primary" onclick="register()">🎁 Регистрация (+100)</button>
+        <button class="btn-glass" onclick="login()">Войти</button>
+        <button class="btn-glass" onclick="showPage('adminLoginPage')">👑 Админ-панель</button>
         <div class="status" id="authStatus"></div>
     </div>
 </div>
 
+<!-- АДМИН ВХОД -->
 <div class="auth-bg hidden" id="adminLoginPage">
     <div class="auth-box">
-        <div class="auth-logo">ADMIN</div>
-        <div class="auth-sub">PANEL</div>
+        <div class="auth-logo" style="background:linear-gradient(135deg,#ef4444,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">ADMIN</div>
+        <div class="auth-sub">CONTROL PANEL</div>
         <input type="password" id="adminPass" placeholder="Пароль админа">
-        <button class="btn-purple" onclick="adminLogin()">Войти</button>
-        <button class="btn-dark" onclick="showPage('authPage')">← Назад</button>
+        <button class="btn-primary" onclick="adminLogin()">Войти</button>
+        <button class="btn-glass" onclick="showPage('authPage')">← Назад</button>
         <div class="status" id="adminLoginStatus"></div>
     </div>
 </div>
 
+<!-- АДМИН ПАНЕЛЬ -->
 <div id="adminPage" class="hidden">
     <div class="topbar"><div class="title">ADMIN</div></div>
     <div class="section" style="margin-top:16px;">
@@ -145,31 +258,32 @@ button:disabled { opacity: 0.4; }
     </div>
     <div class="section">
         <div class="section-title">💰 Выдать</div>
-        <input type="text" id="adminGiveUser" placeholder="@ Ник">
+        <input type="text" id="adminGiveUser" placeholder="@ Ник игрока">
         <input type="number" id="adminGiveAmount" placeholder="Сумма">
-        <button class="btn-white" onclick="adminGive()">Выдать</button>
+        <button class="btn-primary" onclick="adminGive()">Выдать</button>
     </div>
     <div class="section">
         <div class="section-title">👥 Юзеры</div>
         <div id="adminUsersList"></div>
-        <button class="btn-dark" onclick="adminRefresh()">🔄 Обновить</button>
+        <button class="btn-glass" onclick="adminRefresh()">🔄 Обновить</button>
         <button class="btn-red" onclick="adminLogout()">🚪 Выйти</button>
         <div class="status" id="adminStatus"></div>
     </div>
 </div>
 
+<!-- ОСНОВНОЕ -->
 <div id="mainPage" class="hidden">
     <div class="topbar">
         <div class="back">←</div>
-        <div class="title">TRADE</div>
-        <div class="menu">⋮</div>
+        <div class="title">WINTER GIFT</div>
+        <div class="dots">⋮</div>
     </div>
 
     <div class="user-header">
         <div class="avatar">👤</div>
         <div class="user-info">
             <div class="name" id="userName">@user</div>
-            <div class="sub">Winter Casino</div>
+            <div class="sub">В сети</div>
         </div>
         <button class="gift-btn" onclick="showTab('deposit')">🎁 Внести</button>
     </div>
@@ -179,17 +293,17 @@ button:disabled { opacity: 0.4; }
         <div class="val"><span class="coin">💎</span> <span id="starCount">0</span></div>
     </div>
 
-    <div class="stake-card">
+    <div class="glass">
         <div class="stake-row">
             <div class="lbl">ТИП СТЕЙКИНГА</div>
             <div class="apy">54% APY</div>
         </div>
-        <div class="stake-desc">Выставляйте предметы на продажу и получайте процент от дохода сервиса</div>
+        <div class="stake-desc">Выставляйте подарки на продажу и получайте процент от дохода сервиса</div>
     </div>
 
     <div class="bal-grid">
         <div class="bal-card">
-            <div class="lbl">⭐ ЗВЁЗДЫ</div>
+            <div class="lbl">🎁 @GIFT</div>
             <div class="val" id="topStars">0</div>
         </div>
         <div class="bal-card blue">
@@ -200,90 +314,105 @@ button:disabled { opacity: 0.4; }
 
     <div class="status" id="mainStatus"></div>
 
+    <!-- КОЛЕСО -->
     <div id="tab-wheel">
         <div class="section">
             <div class="section-title">🎡 Колесо удачи</div>
             <div class="wheel-wrap"><div class="wheel-arrow">▼</div><div class="wheel" id="wheelEl">🎰</div></div>
             <div class="status" id="wheelTimer"></div>
-            <button class="btn-white" onclick="spinWheel()" id="wheelBtn">🎡 Крутить</button>
+            <button class="btn-primary" onclick="spinWheel()" id="wheelBtn">🎡 Крутить</button>
         </div>
     </div>
 
+    <!-- КЕЙСЫ -->
     <div id="tab-cases" class="hidden">
         <div class="section">
             <div class="section-title">📦 Кейсы</div>
             <div class="case-grid">
-                <div class="case" onclick="openCase('poor')"><div class="icon">🗑️</div><div class="name">Нищий</div><div class="price">50 ⭐</div></div>
-                <div class="case" onclick="openCase('medium')"><div class="icon">📦</div><div class="name">Средний</div><div class="price">100 ⭐</div></div>
-                <div class="case" onclick="openCase('cute')"><div class="icon">🎀</div><div class="name">Няшный</div><div class="price">250 ⭐</div></div>
-                <div class="case" onclick="openCase('admin')"><div class="icon">🛡️</div><div class="name">Админ</div><div class="price">500 ⭐</div></div>
-                <div class="case rich" onclick="openCase('rich')"><div class="icon">💎</div><div class="name">Богач</div><div class="price">1000 ⭐</div></div>
+                <div class="case" onclick="openCase('poor')"><div class="icon">🗑️</div><div class="name">Нищий</div><div class="price">50</div></div>
+                <div class="case" onclick="openCase('medium')"><div class="icon">📦</div><div class="name">Средний</div><div class="price">100</div></div>
+                <div class="case" onclick="openCase('cute')"><div class="icon">🎀</div><div class="name">Няшный</div><div class="price">250</div></div>
+                <div class="case" onclick="openCase('admin')"><div class="icon">🛡️</div><div class="name">Админ</div><div class="price">500</div></div>
+                <div class="case rich" onclick="openCase('rich')"><div class="icon">💎</div><div class="name">Богач</div><div class="price">1000</div></div>
             </div>
         </div>
     </div>
 
+    <!-- ПРОМО -->
     <div id="tab-promo" class="hidden">
         <div class="section">
             <div class="section-title">🎁 Промокод</div>
             <input type="text" id="promoInput" placeholder="Введите промокод">
-            <button class="btn-white" onclick="usePromo()">Активировать</button>
+            <button class="btn-primary" onclick="usePromo()">Активировать</button>
             <div class="status" id="promoStatus"></div>
         </div>
     </div>
 
+    <!-- ОБМЕН -->
     <div id="tab-exchange" class="hidden">
         <div class="section">
             <div class="section-title">💎 Обмен</div>
-            <div class="stake-card" style="margin:0 0 12px;">
+            <div class="glass" style="margin:0 0 12px;">
                 <div class="stake-desc">1000 звёзд = 1 грамм</div>
             </div>
             <input type="number" id="exchangeAmount" placeholder="Сумма (кратно 1000)" step="1000">
-            <button class="btn-white" onclick="exchange()">Обменять</button>
+            <button class="btn-primary" onclick="exchange()">Обменять</button>
             <div class="status" id="exchangeStatus"></div>
         </div>
     </div>
 
+    <!-- ПОПОЛНЕНИЕ -->
     <div id="tab-deposit" class="hidden">
         <div class="section">
             <div class="section-title">💳 Пополнение</div>
-            <div class="stake-card" style="margin:0;">
-                <div class="stake-desc">Напишите в Wintegramm: <b style="color:#7c3aed;">@gift</b><br><br>Скажите число ⭐<br><br>1 ⭐ = 10 звёзд здесь</div>
+            <div class="glass" style="margin:0;">
+                <div class="stake-desc">
+                    Напишите в Wintegramm:<br>
+                    <b style="color:#a855f7;font-size:18px;">@gift</b><br><br>
+                    Скажите число звёзд<br><br>
+                    1 звезда в Wintegramm = 10 здесь
+                </div>
             </div>
         </div>
     </div>
 
+    <!-- ВЫВОД -->
     <div id="tab-withdraw" class="hidden">
         <div class="section">
             <div class="section-title">💸 Вывод</div>
-            <div class="stake-card" style="margin:0 0 12px;">
-                <div class="stake-desc">Напишите в Wintegramm: <b style="color:#7c3aed;">@gift</b><br><br>Скажите: <b>Вывод</b><br>И укажите ваш баланс<br><br><b>Минимум: 1000 ⭐</b></div>
+            <div class="glass" style="margin:0 0 12px;">
+                <div class="stake-desc">
+                    Напишите в Wintegramm:<br>
+                    <b style="color:#a855f7;font-size:18px;">@gift</b><br><br>
+                    Скажите: <b>Вывод</b><br>
+                    Укажите ваш баланс<br><br>
+                    <b>Минимум: 1000</b>
+                </div>
             </div>
             <input type="number" id="withdrawAmount" placeholder="Сумма (мин 1000)">
-            <button class="btn-white" onclick="withdraw()">Создать заявку</button>
+            <button class="btn-primary" onclick="withdraw()">Создать заявку</button>
             <div class="status" id="withdrawStatus"></div>
         </div>
     </div>
 
+    <!-- ПРОФИЛЬ -->
     <div id="tab-profile" class="hidden">
-        <div style="padding:20px 16px;">
+        <div style="padding:20px 18px;">
             <div class="prof-avatar">👤</div>
             <div class="prof-name" id="profileName">@user</div>
         </div>
-        <div class="currency-panel gold">
-            <div class="cur-title">⭐ ЗВЁЗДЫ</div>
-            <div class="cur-val" id="profileStars">0</div>
-        </div>
-        <div class="currency-panel blue">
-            <div class="cur-title">💎 ГРАММЫ</div>
-            <div class="cur-val" id="profileGrams">0</div>
+        <div class="bal-grid">
+            <div class="bal-card"><div class="lbl">🎁 @GIFT</div><div class="val" id="profileStars">0</div></div>
+            <div class="bal-card blue"><div class="lbl">💎 ГРАММЫ</div><div class="val" id="profileGrams">0</div></div>
         </div>
         <div class="section">
-            <button class="btn-dark" onclick="refreshProfile()">🔄 Обновить</button>
+            <button class="btn-glass" onclick="refreshProfile()">🔄 Обновить</button>
             <button class="btn-red" onclick="logout()">🚪 Выйти</button>
         </div>
     </div>
 </div>
 
+<!-- НИЖНЕЕ МЕНЮ -->
 <div class="bottom-nav hidden" id="bottomNav">
     <button class="active" onclick="showTab('wheel', this)" id="nav-wheel"><div class="ni">🎡</div>Колесо</button>
     <button onclick="showTab('cases', this)" id="nav-cases"><div class="ni">📦</div>Кейсы</button>
@@ -331,14 +460,8 @@ async function login() {
     token = r.token; localStorage.setItem('token', token);
     enter();
 }
-function enter() {
-    showPage('mainPage');
-    refreshProfile();
-}
-function logout() {
-    localStorage.removeItem('token');
-    location.reload();
-}
+function enter() { showPage('mainPage'); refreshProfile(); }
+function logout() { localStorage.removeItem('token'); location.reload(); }
 async function refreshProfile() {
     const r = await api('/api/profile', { token });
     if (!r.ok) return st('mainStatus', '❌ ' + r.error, '#ef4444');
@@ -358,7 +481,7 @@ async function refreshProfile() {
         const h = Math.floor(left / 3600000);
         const m = Math.floor((left % 3600000) / 60000);
         t.innerText = '⏳ ' + h + 'ч ' + m + 'м';
-        t.style.color = '#fbbf24';
+        t.style.color = '#a855f7';
     }
 }
 function showTab(tab, btn) {
@@ -377,14 +500,14 @@ async function spinWheel() {
     setTimeout(async () => {
         const r = await api('/api/wheel', { token });
         if (!r.ok) { st('mainStatus', '❌ ' + r.error, '#ef4444'); w.style.transform = 'rotate(0deg)'; return; }
-        st('mainStatus', '🎉 Выпало: ' + r.prize + ' ⭐', '#22c55e');
+        st('mainStatus', '🎉 Выпало: ' + r.prize + ' 🎁', '#22c55e');
         refreshProfile();
     }, 4100);
 }
 async function openCase(t) {
     const r = await api('/api/case', { token, caseType: t });
     if (!r.ok) return st('mainStatus', '❌ ' + r.error, '#ef4444');
-    st('mainStatus', '🎁 Из кейса: ' + r.prize + ' ⭐', '#22c55e');
+    st('mainStatus', '🎁 Из кейса: ' + r.prize + ' 🎁', '#22c55e');
     refreshProfile();
 }
 async function usePromo() {
@@ -392,7 +515,7 @@ async function usePromo() {
     if (!code) return st('promoStatus', '❌ Введите промокод', '#ef4444');
     const r = await api('/api/promo', { token, code });
     if (!r.ok) return st('promoStatus', '❌ ' + r.error, '#ef4444');
-    st('promoStatus', '✅ +' + r.amount + ' ⭐', '#22c55e');
+    st('promoStatus', '✅ +' + r.amount + ' 🎁', '#22c55e');
     document.getElementById('promoInput').value = '';
     refreshProfile();
 }
@@ -423,15 +546,15 @@ async function adminRefresh() {
     const s = await api('/api/admin/stats', { password: adminPass });
     if (!s.ok) return st('adminStatus', '❌ ' + s.error, '#ef4444');
     document.getElementById('adminStats').innerHTML =
-        '<div class="stake-card" style="margin:0;text-align:center;padding:14px;"><div style="font-size:22px;font-weight:900;color:#fff;">' + s.usersCount + '</div><div style="font-size:11px;color:#666;">Игроков</div></div>' +
-        '<div class="stake-card" style="margin:0;text-align:center;padding:14px;"><div style="font-size:22px;font-weight:900;color:#fbbf24;">' + s.totalStars + '</div><div style="font-size:11px;color:#666;">Всего ⭐</div></div>' +
-        '<div class="stake-card" style="margin:0;text-align:center;padding:14px;"><div style="font-size:22px;font-weight:900;color:#22c55e;">' + s.adminBalance + '</div><div style="font-size:11px;color:#666;">Комиссия</div></div>' +
-        '<div class="stake-card" style="margin:0;text-align:center;padding:14px;"><div style="font-size:22px;font-weight:900;color:#ef4444;">' + s.banned + '</div><div style="font-size:11px;color:#666;">Бан</div></div>';
+        '<div class="glass" style="margin:0;text-align:center;padding:16px;"><div style="font-size:24px;font-weight:900;">' + s.usersCount + '</div><div style="font-size:11px;color:#666;">Игроков</div></div>' +
+        '<div class="glass" style="margin:0;text-align:center;padding:16px;"><div style="font-size:24px;font-weight:900;color:#a855f7;">' + s.totalStars + '</div><div style="font-size:11px;color:#666;">Всего</div></div>' +
+        '<div class="glass" style="margin:0;text-align:center;padding:16px;"><div style="font-size:24px;font-weight:900;color:#22c55e;">' + s.adminBalance + '</div><div style="font-size:11px;color:#666;">Комиссия</div></div>' +
+        '<div class="glass" style="margin:0;text-align:center;padding:16px;"><div style="font-size:24px;font-weight:900;color:#ef4444;">' + s.banned + '</div><div style="font-size:11px;color:#666;">Бан</div></div>';
     const u = await api('/api/admin/users', { password: adminPass });
     if (!u.ok) return;
     document.getElementById('adminUsersList').innerHTML = u.users.map(x =>
-        '<div style="background:#141414;padding:14px;border-radius:14px;margin:8px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;border:1px solid #1f1f1f;">' +
-        '<div style="font-size:13px;"><b>' + x.username + '</b> — ' + x.stars + ' ⭐ ' + (x.banned ? '🚫' : '') + '</div>' +
+        '<div class="glass" style="margin:8px 0;padding:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">' +
+        '<div style="font-size:13px;"><b>' + x.username + '</b> — ' + x.stars + ' 🎁 ' + (x.banned ? '🚫' : '') + '</div>' +
         '<div>' +
         '<button class="btn-green" style="width:auto;padding:6px 12px;font-size:11px;margin:0;display:inline-block;" onclick="quickGive(\'' + x.username + '\',1000)">+1000</button> ' +
         '<button class="btn-red" style="width:auto;padding:6px 12px;font-size:11px;margin:0;display:inline-block;" onclick="toggleBan(\'' + x.username + '\',' + (!x.banned) + ')">' + (x.banned ? 'Разбан' : 'Бан') + '</button>' +
