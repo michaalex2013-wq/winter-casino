@@ -136,6 +136,7 @@ button:disabled { opacity: 0.4; }
         <button class="active" onclick="showTab('wheel', this)">🎡 Колесо</button>
         <button onclick="showTab('cases', this)">📦 Кейсы</button>
         <button onclick="showTab('duel', this)">⚔️ Дуэли</button>
+        <button onclick="showTab('promo', this)">🎁 Промокод</button>
         <button onclick="showTab('deposit', this)">💎 Пополнить</button>
         <button onclick="showTab('withdraw', this)">💸 Вывод</button>
         <button onclick="showTab('profile', this)">👤 Профиль</button>
@@ -185,6 +186,19 @@ button:disabled { opacity: 0.4; }
             <button class="btn-gold" onclick="duelCreate()">📨 СОЗДАТЬ ВЫЗОВ</button>
             <button class="btn-dark" onclick="duelList()">📬 ПРОВЕРИТЬ ВЫЗОВЫ</button>
             <div id="duelListBox"></div>
+        </div>
+    </div>
+
+    <div id="tab-promo" class="hidden">
+        <div class="section">
+            <div class="section-title">🎁 ПРОМОКОД</div>
+            <div class="deposit-box">
+                <div class="dep-title">ВВЕДИ ПРОМОКОД</div>
+                <div class="dep-text">Получи бонусные звёзды!<br>Каждый промокод — один раз на аккаунт.</div>
+            </div>
+            <input type="text" id="promoInput" placeholder="Введите промокод">
+            <button class="btn-gold" onclick="usePromo()">✅ АКТИВИРОВАТЬ</button>
+            <div class="status" id="promoStatus"></div>
         </div>
     </div>
 
@@ -322,7 +336,7 @@ function startWheelTimer(left) {
     wheelTimerInterval = setInterval(tick, 1000);
 }
 function showTab(tab, btn) {
-    ['wheel', 'cases', 'duel', 'deposit', 'withdraw', 'profile'].forEach(t => document.getElementById('tab-' + t).classList.add('hidden'));
+    ['wheel', 'cases', 'duel', 'promo', 'deposit', 'withdraw', 'profile'].forEach(t => document.getElementById('tab-' + t).classList.add('hidden'));
     document.getElementById('tab-' + tab).classList.remove('hidden');
     document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
     if (btn) btn.classList.add('active');
@@ -392,6 +406,16 @@ async function duelAccept(duelId) {
     document.getElementById('starCount').innerText = r.stars;
     document.getElementById('topBalance').innerText = r.stars;
     duelList();
+}
+async function usePromo() {
+    const code = document.getElementById('promoInput').value.trim();
+    if (!code) return showStatus('promoStatus', '❌ Введите промокод', '#ff3355');
+    const r = await api('/api/promo', { token, code });
+    if (!r.ok) return showStatus('promoStatus', '❌ ' + r.error, '#ff3355');
+    showStatus('promoStatus', '✅ +' + r.amount + ' ⭐', '#00cc66');
+    document.getElementById('starCount').innerText = r.stars;
+    document.getElementById('topBalance').innerText = r.stars;
+    document.getElementById('promoInput').value = '';
 }
 async function withdraw() {
     const amount = parseInt(document.getElementById('withdrawAmount').value);
