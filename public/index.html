@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Winter Casino</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
+body { background: linear-gradient(180deg, #0a0a15 0%, #1a0a1e 100%); color: #e0e0e0; min-height: 100vh; padding: 15px; }
+.header { text-align: center; margin-bottom: 20px; }
+.header h1 { color: #ffd700; font-size: 28px; letter-spacing: 4px; text-shadow: 0 0 20px rgba(255,215,0,0.5); }
+.header .sub { color: #888; font-size: 11px; letter-spacing: 3px; margin-top: 3px; }
+.auth-box, .main-box, .admin-box { background: #16161f; border-radius: 18px; padding: 22px; max-width: 500px; margin: 0 auto 15px; border: 1px solid #2a2a3a; box-shadow: 0 0 30px rgba(255,215,0,0.05); }
+input { width: 100%; padding: 14px; margin: 6px 0; background: #0d0d12; border: 1px solid #2a2a3a; border-radius: 12px; color: #fff; font-size: 14px; }
+button { width: 100%; padding: 14px; margin: 6px 0; border: none; border-radius: 12px; font-size: 14px; font-weight: bold; cursor: pointer; transition: transform 0.1s; }
+button:active { transform: scale(0.97); }
+.btn-gold { background: linear-gradient(90deg, #ffd700, #ff9900); color: #111; box-shadow: 0 0 15px rgba(255,215,0,0.3); }
+.btn-dark { background: #22222e; color: #ccc; border: 1px solid #333344; }
+.btn-red { background: #ff3355; color: white; }
+.btn-green { background: #00cc66; color: white; }
+.btn-admin { background: linear-gradient(90deg, #ff3355, #cc0033); color: #fff; }
+.stars { text-align: center; font-size: 34px; color: #ffd700; font-weight: bold; margin: 12px 0; text-shadow: 0 0 15px rgba(255,215,0,0.5); }
+.title { color: #ffd700; font-weight: bold; margin: 16px 0 10px; font-size: 15px; letter-spacing: 1px; }
+.case-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.case { background: linear-gradient(135deg, #1f1f2e, #2a1a3e); border: 1px solid #2a2a3a; border-radius: 14px; padding: 16px 10px; text-align: center; cursor: pointer; }
+.case:active { transform: scale(0.96); border-color: #ffd700; }
+.case .icon { font-size: 34px; }
+.case .name { font-size: 13px; color: #fff; font-weight: bold; margin-top: 6px; }
+.case .price { font-size: 12px; color: #ffd700; margin-top: 4px; font-weight: bold; }
+.case.poor { border-color: #4b69ff; }
+.case.medium { border-color: #8847ff; }
+.case.cute { border-color: #d32ce6; }
+.case.admin { border-color: #eb4b4b; }
+.case.rich { border-color: #ffd700; }
+.wheel-wrap { position: relative; margin: 15px auto; width: 200px; height: 200px; }
+.wheel { width: 200px; height: 200px; border-radius: 50%; background: conic-gradient(#ff3355 0deg 90deg, #ffd700 90deg 180deg, #00cc66 180deg 270deg, #3366ff 270deg 360deg); display: flex; align-items: center; justify-content: center; font-size: 50px; transition: transform 4s cubic-bezier(0.15, 0.7, 0.3, 1); box-shadow: 0 0 30px rgba(255,215,0,0.3); }
+.wheel-arrow { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); font-size: 30px; z-index: 10; color: #ff3355; }
+.prizes { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 10px 0; }
+.prize-item { background: #1f1f2e; border-radius: 8px; padding: 8px; text-align: center; font-size: 12px; }
+.prize-item .p-val { color: #ffd700; font-weight: bold; font-size: 14px; }
+.duel-info { background: linear-gradient(135deg, #1f1f2e, #2a1a3e); padding: 12px; border-radius: 12px; margin: 8px 0; font-size: 13px; border: 1px solid #2a2a3a; }
+.profile-row { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #2a2a3a; font-size: 14px; }
+.profile-row:last-child { border-bottom: none; }
+.admin-user { background: #1f1f2e; padding: 12px; border-radius: 12px; margin: 8px 0; font-size: 13px; border: 1px solid #2a2a3a; }
+.admin-user .row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.admin-user .btns { display: flex; gap: 5px; flex-wrap: wrap; }
+.admin-user button { width: auto; padding: 6px 10px; font-size: 11px; margin: 0; }
+.admin-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.admin-stat { background: linear-gradient(135deg, #1f1f2e, #2a1a3e); padding: 12px; border-radius: 12px; text-align: center; border: 1px solid #2a2a3a; }
+.admin-stat .val { color: #ffd700; font-weight: bold; font-size: 20px; }
+.admin-stat .lbl { font-size: 11px; color: #888; margin-top: 3px; }
+.status { text-align: center; font-size: 13px; margin: 10px 0; min-height: 18px; white-space: pre-line; }
+.hidden { display: none; }
+.tabs { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+.tabs button { padding: 10px 8px; font-size: 12px; flex: 1; min-width: 70px; }
+.tabs button.active { background: linear-gradient(90deg, #ffd700, #ff9900); color: #111; }
+.deposit-box { background: linear-gradient(135deg, #1f1f2e, #2a1a3e); border: 1px solid #ffd700; border-radius: 14px; padding: 16px; margin-top: 12px; text-align: center; }
+.deposit-box .dep-title { color: #ffd700; font-weight: bold; font-size: 14px; margin-bottom: 8px; }
+.deposit-box .dep-text { font-size: 13px; color: #ccc; line-height: 1.6; }
+.deposit-box .dep-nick { color: #ffd700; font-weight: bold; font-size: 16px; }
+.timer { text-align: center; font-size: 13px; color: #ff9900; margin: 8px 0; font-weight: bold; }
+</style>
+</head>
+<body>
+<div class="header">
+    <h1>❄️ WINTER CASINO ❄️</h1>
+    <div class="sub">⭐ ЗВЁЗДЫ · КЕЙСЫ · ДУЭЛИ ⭐</div>
+</div>
+
+<div class="auth-box" id="authBox">
+    <div class="title">🎰 ВХОД / РЕГИСТРАЦИЯ</div>
+    <input type="text" id="username" placeholder="@ Ваш ник (начните с @)">
+    <input type="password" id="password" placeholder="🔑 Пароль">
+    <button class="btn-gold" onclick="register()">🎁 Регистрация (+100 ⭐)</button>
+    <button class="btn-dark" onclick="login()">🔓 Войти</button>
+    <button class="btn-admin" onclick="showAdminLogin()">👑 Админ-панель</button>
+    <div class="status" id="authStatus"></div>
+</div>
+
+<div class="admin-box hidden" id="adminLoginBox">
+    <div class="title">👑 АДМИН ВХОД</div>
+    <input type="password" id="adminPass" placeholder="🔐 Пароль админа">
+    <button class="btn-admin" onclick="adminLogin()">ВОЙТИ</button>
+    <button class="btn-dark" onclick="hideAdminLogin()">← Назад</button>
+    <div class="status" id="adminLoginStatus"></div>
+</div>
+
+<div class="admin-box hidden" id="adminPanel">
+    <div class="title">👑 АДМИН ПАНЕЛЬ</div>
+    <div class="admin-stats" id="adminStats"></div>
+    <div class="title">💰 ВЫДАТЬ ЗВЁЗДЫ</div>
+    <input type="text" id="adminGiveUser" placeholder="@ Ник игрока">
+    <input type="number" id="adminGiveAmount" placeholder="Сумма (можно минус)">
+    <button class="btn-gold" onclick="adminGive()">ВЫДАТЬ</button>
+    <div class="title">💎 КОМИССИЯ</div>
+    <div class="status" id="adminCommission">Загрузка...</div>
+    <button class="btn-green" onclick="adminCollect()">ЗАБРАТЬ ВСЁ</button>
+    <div class="title">👥 ПОЛЬЗОВАТЕЛИ</div>
+    <div id="adminUsersList"></div>
+    <button class="btn-dark" onclick="adminRefresh()">🔄 ОБНОВИТЬ</button>
+    <button class="btn-red" onclick="adminLogout()">🚪 ВЫЙТИ</button>
+    <div class="status" id="adminStatus"></div>
+</div>
+
+<div class="main-box hidden" id="mainBox">
+    <div class="stars">⭐ <span id="starCount">0</span></div>
+    <div class="status" id="mainStatus"></div>
+
+    <div class="tabs">
+        <button class="btn-dark active" onclick="showTab('wheel', this)">🎡 Колесо</button>
+        <button class="btn-dark" onclick="showTab('cases', this)">📦 Кейсы</button>
+        <button class="btn-dark" onclick="showTab('duel', this)">⚔️ Дуэли</button>
+        <button class="btn-dark" onclick="showTab('deposit', this)">💎 Пополнить</button>
+        <button class="btn-dark" onclick="showTab('withdraw', this)">💸 Вывод</button>
+        <button class="btn-dark" onclick="showTab('profile', this)">👤 Профиль</button>
+    </div>
+
+    <div id="tab-wheel">
+        <div class="title">🎡 КОЛЕСО УДАЧИ (раз в 24ч)</div>
+        <div class="wheel-wrap">
+            <div class="wheel-arrow">▼</div>
+            <div class="wheel" id="wheelEl">🎰</div>
+        </div>
+        <div class="prizes">
+            <div class="prize-item">💀 <span class="p-val">0 ⭐</span></div>
+            <div class="prize-item">🥉 <span class="p-val">10 ⭐</span></div>
+            <div class="prize-item">🥈 <span class="p-val">50 ⭐</span></div>
+            <div class="prize-item">🥇 <span class="p-val">100 ⭐</span></div>
+        </div>
+        <div class="timer" id="wheelTimer"></div>
+        <button class="btn-gold" onclick="spinWheel()" id="wheelBtn">🎡 КРУТИТЬ КОЛЕСО</button>
+    </div>
+
+    <div id="tab-cases" class="hidden">
+        <div class="title">📦 КЕЙСЫ</div>
+        <div class="case-grid">
+            <div class="case poor" onclick="openCase('poor')"><div class="icon">🗑️</div><div class="name">НИЩИЙ</div><div class="price">50 ⭐</div></div>
+            <div class="case medium" onclick="openCase('medium')"><div class="icon">📦</div><div class="name">СРЕДНИЙ</div><div class="price">100 ⭐</div></div>
+            <div class="case cute" onclick="openCase('cute')"><div class="icon">🎀</div><div class="name">НЯШНЫЙ</div><div class="price">250 ⭐</div></div>
+            <div class="case admin" onclick="openCase('admin')"><div class="icon">🛡️</div><div class="name">АДМИН</div><div class="price">500 ⭐</div></div>
+            <div class="case rich" onclick="openCase('rich')"><div class="icon">💎</div><div class="name">БОГАЧ</div><div class="price">1000 ⭐</div></div>
+        </div>
+    </div>
+
+    <div id="tab-duel" class="hidden">
+        <div class="title">🤖 ДУЭЛЬ С БОТОМ</div>
+        <input type="number" id="duelBotBet" placeholder="💰 Ставка" value="50">
+        <button class="btn-gold" onclick="duelBot()">🎲 БРОСИТЬ КУБИКИ</button>
+        <div class="title">⚔️ ДУЭЛЬ С ИГРОКОМ</div>
+        <input type="text" id="duelOpponent" placeholder="👤 @ Ник соперника">
+        <input type="number" id="duelPlayerBet" placeholder="💰 Ставка" value="50">
+        <button class="btn-green" onclick="duelCreate()">📨 СОЗДАТЬ ВЫЗОВ</button>
+        <button class="btn-dark" onclick="duelList()">📬 ПРОВЕРИТЬ ВЫЗОВЫ</button>
+        <div id="duelListBox"></div>
+    </div>
+
+    <div id="tab-deposit" class="hidden">
+        <div class="title">💎 ПОПОЛНЕНИЕ</div>
+        <div class="deposit-box">
+            <div class="dep-title">💌 КАК ПОПОЛНИТЬ БАЛАНС</div>
+            <div class="dep-text">
+                Напишите в Wintegramm: <span class="dep-nick">@referator</span><br>
+                Скажите число ⭐<br><br>
+                <b>1 ⭐ в Wintegramm = 10 звёзд на сайте</b><br>
+                Минимум: 10 ⭐ (100 на сайте)
+            </div>
+        </div>
+    </div>
+
+    <div id="tab-withdraw" class="hidden">
+        <div class="title">💸 ВЫВОД СРЕДСТВ</div>
+        <div class="deposit-box">
+            <div class="dep-title">💌 КАК ВЫВЕСТИ</div>
+            <div class="dep-text">
+                Напишите в Wintegramm: <span class="dep-nick">@referator</span><br>
+                Скажите: <b>Вывод</b><br>
+                И укажите ваш баланс<br><br>
+                <b>Минимум для вывода: 1000 ⭐</b><br>
+                1 ⭐ на сайте = 0.1 ⭐ в Wintegramm
+            </div>
+        </div>
+        <input type="number" id="withdrawAmount" placeholder="Сумма вывода (мин 1000)">
+        <button class="btn-gold" onclick="withdraw()">💸 СОЗДАТЬ ЗАЯВКУ</button>
+        <div class="status" id="withdrawStatus"></div>
+    </div>
+
+    <div id="tab-profile" class="hidden">
+        <div class="title">👤 ПРОФИЛЬ</div>
+        <div id="profileInfo"></div>
+        <button class="btn-dark" onclick="refreshProfile()">🔄 ОБНОВИТЬ</button>
+        <button class="btn-red" onclick="logout()">🚪 ВЫЙТИ</button>
+    </div>
+</div>
+
+<script>
+let token = localStorage.getItem('token') || '';
+let adminPass = '';
+let wheelTimerInterval = null;
+
+async function api(url, data) {
+    const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+    return res.json();
+}
+function showStatus(el, msg, color) {
+    const e = document.getElementById(el);
+    e.innerText = msg;
+    e.style.color = color || '#888';
+}
+async function register() {
+    const u = document.getElementById('username').value.trim();
+    const p = document.getElementById('password').value;
+    const r = await api('/api/register', { username: u, password: p });
+    if (!r.ok) return showStatus('authStatus', '❌ ' + r.error, '#ff3355');
+    token = r.token;
+    localStorage.setItem('token', token);
+    enterCasino();
+}
+async function login() {
+    const u = document.getElementById('username').value.trim();
+    const p = document.getElementById('password').value;
+    const r = await api('/api/login', { username: u, password: p });
+    if (!r.ok) return showStatus('authStatus', '❌ ' + r.error, '#ff3355');
+    token = r.token;
+    localStorage.setItem('token', token);
+    enterCasino();
+}
+function enterCasino() {
+    document.getElementById('authBox').classList.add('hidden');
+    document.getElementById('mainBox').classList.remove('hidden');
+    refreshProfile();
+}
+function logout() {
+    if (wheelTimerInterval) clearInterval(wheelTimerInterval);
+    localStorage.removeItem('token');
+    location.reload();
+}
+async function refreshProfile() {
+    const r = await api('/api/profile', { token });
+    if (!r.ok) return showStatus('mainStatus', '❌ ' + r.error, '#ff3355');
+    document.getElementById('starCount').innerText = r.stars;
+    document.getElementById('profileInfo').innerHTML =
+        '<div class="profile-row"><span>👤 Ник</span><b>' + r.username + '</b></div>' +
+        '<div class="profile-row"><span>⭐ Звёзд</span><b>' + r.stars + '</b></div>';
+    startWheelTimer(r.wheelLeft);
+}
+function startWheelTimer(left) {
+    if (wheelTimerInterval) clearInterval(wheelTimerInterval);
+    const btn = document.getElementById('wheelBtn');
+    const timerEl = document.getElementById('wheelTimer');
+    if (left <= 0) {
+        btn.disabled = false;
+        timerEl.innerText = '✅ Доступно!';
+        timerEl.style.color = '#00cc66';
+        return;
+    }
+    btn.disabled = true;
+    const endTime = Date.now() + left;
+    function tick() {
+        const now = Date.now();
+        const diff = endTime - now;
+        if (diff <= 0) {
+            clearInterval(wheelTimerInterval);
+            timerEl.innerText = '✅ Доступно!';
+            timerEl.style.color = '#00cc66';
+            btn.disabled = false;
+            return;
+        }
+        const h = Math.floor(diff / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+        timerEl.innerText = '⏳ ' + h + 'ч ' + m + 'м ' + s + 'с';
+        timerEl.style.color = '#ff9900';
+    }
+    tick();
+    wheelTimerInterval = setInterval(tick, 1000);
+}
+function showTab(tab, btn) {
+    ['wheel', 'cases', 'duel', 'deposit', 'withdraw', 'profile'].forEach(t => document.getElementById('tab-' + t).classList.add('hidden'));
+    document.getElementById('tab-' + tab).classList.remove('hidden');
+    document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+}
+async function spinWheel() {
+    const wheel = document.getElementById('wheelEl');
+    wheel.style.transform = 'rotate(1080deg)';
+    setTimeout(async () => {
+        const r = await api('/api/wheel', { token });
+        if (!r.ok) {
+            showStatus('mainStatus', '❌ ' + r.error, '#ff3355');
+            wheel.style.transform = 'rotate(0deg)';
+            refreshProfile();
+            return;
+        }
+        let emoji = r.prize === 0 ? '💀' : r.prize === 10 ? '🥉' : r.prize === 50 ? '🥈' : '🥇';
+        showStatus('mainStatus', emoji + ' Выпало: ' + r.prize + ' ⭐', '#00cc66');
+        document.getElementById('starCount').innerText = r.stars;
+        refreshProfile();
+    }, 4100);
+}
+async function openCase(type) {
+    const r = await api('/api/case', { token, caseType: type });
+    if (!r.ok) return showStatus('mainStatus', '❌ ' + r.error, '#ff3355');
+    showStatus('mainStatus', '🎁 Из кейса выпало: ' + r.prize + ' ⭐', '#00cc66');
+    document.getElementById('starCount').innerText = r.stars;
+}
+async function duelBot() {
+    const bet = parseInt(document.getElementById('duelBotBet').value);
+    const r = await api('/api/duel-bot', { token, bet });
+    if (!r.ok) return showStatus('mainStatus', '❌ ' + r.error, '#ff3355');
+    let txt = '🎲 Вы: ' + r.my + ' | 🤖 Бот: ' + r.bot + '\n';
+    if (r.result === 'win') txt += '🏆 Победа! +' + Math.floor(bet * 0.5) + ' ⭐';
+    if (r.result === 'lose') txt += '💀 Проигрыш! -' + bet + ' ⭐';
+    if (r.result === 'draw') txt += '🤝 Ничья';
+    showStatus('mainStatus', txt, r.result === 'win' ? '#00cc66' : '#ff3355');
+    document.getElementById('starCount').innerText = r.stars;
+}
+async function duelCreate() {
+    const opponent = document.getElementById('duelOpponent').value.trim();
+    const bet = parseInt(document.getElementById('duelPlayerBet').value);
+    const r = await api('/api/duel-create', { token, bet, opponent });
+    if (!r.ok) return showStatus('mainStatus', '❌ ' + r.error, '#ff3355');
+    showStatus('mainStatus', '📨 Вызов создан!', '#00cc66');
+}
+async function duelList() {
+    const r = await api('/api/duel-list', { token });
+    if (!r.ok) return;
+    const box = document.getElementById('duelListBox');
+    if (r.duels.length === 0) { box.innerHTML = '<div class="status">📭 Нет вызовов</div>'; return; }
+    box.innerHTML = r.duels.map(d =>
+        '<div class="duel-info">⚔️ Вызов от <b>' + d.challenger + '</b><br>💰 Ставка: ' + d.bet + ' ⭐<br>' +
+        '<button class="btn-green" onclick="duelAccept(\'' + d.id + '\')">✅ ПРИНЯТЬ</button></div>'
+    ).join('');
+}
+async function duelAccept(duelId) {
+    const r = await api('/api/duel-accept', { token, duelId });
+    if (!r.ok) return showStatus('mainStatus', '❌ ' + r.error, '#ff3355');
+    let txt = '🎲 Вы: ' + r.my + ' | Соперник: ' + r.his + '\n';
+    if (r.result === 'win') txt += '🏆 ПОБЕДА! Комиссия: ' + r.commission + ' ⭐';
+    if (r.result === 'lose') txt += '💀 Проигрыш';
+    if (r.result === 'draw') txt += '🤝 Ничья';
+    showStatus('mainStatus', txt, r.result === 'win' ? '#00cc66' : '#ff3355');
+    document.getElementById('starCount').innerText = r.stars;
+    duelList();
+}
+async function withdraw() {
+    const amount = parseInt(document.getElementById('withdrawAmount').value);
+    const r = await api('/api/withdraw', { token, amount });
+    if (!r.ok) return showStatus('withdrawStatus', '❌ ' + r.error, '#ff3355');
+    showStatus('withdrawStatus', '✅ ' + r.message + '\nВаш баланс: ' + r.stars, '#00cc66');
+    document.getElementById('starCount').innerText = r.stars;
+}
+function showAdminLogin() {
+    document.getElementById('authBox').classList.add('hidden');
+    document.getElementById('adminLoginBox').classList.remove('hidden');
+}
+function hideAdminLogin() {
+    document.getElementById('adminLoginBox').classList.add('hidden');
+    document.getElementById('authBox').classList.remove('hidden');
+}
+async function adminLogin() {
+    const p = document.getElementById('adminPass').value;
+    const r = await api('/api/admin/login', { password: p });
+    if (!r.ok) return showStatus('adminLoginStatus', '❌ ' + r.error, '#ff3355');
+    adminPass = p;
+    document.getElementById('adminLoginBox').classList.add('hidden');
+    document.getElementById('adminPanel').classList.remove('hidden');
+    adminRefresh();
+}
+function adminLogout() {
+    adminPass = '';
+    document.getElementById('adminPanel').classList.add('hidden');
+    document.getElementById('authBox').classList.remove('hidden');
+}
+async function adminRefresh() {
+    const stats = await api('/api/admin/stats', { password: adminPass });
+    if (!stats.ok) return showStatus('adminStatus', '❌ ' + stats.error, '#ff3355');
+    document.getElementById('adminStats').innerHTML =
+        '<div class="admin-stat"><div class="val">' + stats.usersCount + '</div><div class="lbl">👥 Игроков</div></div>' +
+        '<div class="admin-stat"><div class="val">' + stats.totalStars + '</div><div class="lbl">⭐ Всего звёзд</div></div>' +
+        '<div class="admin-stat"><div class="val">' + stats.adminBalance + '</div><div class="lbl">💰 Комиссия</div></div>' +
+        '<div class="admin-stat"><div class="val">' + stats.activeDuels + '</div><div class="lbl">⚔️ Дуэлей</div></div>' +
+        '<div class="admin-stat"><div class="val">' + stats.banned + '</div><div class="lbl">🚫 Забанено</div></div>';
+    document.getElementById('adminCommission').innerText = '💰 Накоплено: ' + stats.adminBalance + ' ⭐';
+    const users = await api('/api/admin/users', { password: adminPass });
+    if (!users.ok) return;
+    document.getElementById('adminUsersList').innerHTML = users.users.map(u =>
+        '<div class="admin-user">' +
+        '<div class="row"><span>👤 ' + u.username + '</span><b>⭐ ' + u.stars + '</b>' + (u.banned ? ' 🚫' : '') + '</div>' +
+        '<div class="btns">' +
+        '<button class="btn-green" onclick="quickGive(\'' + u.username + '\', 1000)">+1000</button>' +
+        '<button class="btn-dark" onclick="quickGive(\'' + u.username + '\', -1000)">-1000</button>' +
+        '<button class="btn-red" onclick="toggleBan(\'' + u.username + '\', ' + (!u.banned) + ')">' + (u.banned ? '✅ Разбан' : '🚫 Бан') + '</button>' +
+        '</div></div>'
+    ).join('');
+}
+async function adminGive() {
+    const u = document.getElementById('adminGiveUser').value.trim();
+    const a = parseInt(document.getElementById('adminGiveAmount').value);
+    const r = await api('/api/admin/give', { password: adminPass, username: u, amount: a });
+    if (!r.ok) return showStatus('adminStatus', '❌ ' + r.error, '#ff3355');
+    showStatus('adminStatus', '✅ Выдано. Баланс: ' + r.stars, '#00cc66');
+    adminRefresh();
+}
+async function quickGive(username, amount) {
+    await api('/api/admin/give', { password: adminPass, username, amount });
+    adminRefresh();
+}
+async function toggleBan(username, ban) {
+    await api('/api/admin/ban', { password: adminPass, username, ban });
+    adminRefresh();
+}
+async function adminCollect() {
+    const r = await api('/api/admin/collect', { password: adminPass });
+    if (!r.ok) return showStatus('adminStatus', '❌ ' + r.error, '#ff3355');
+    showStatus('adminStatus', '💰 Собрано: ' + r.collected + ' ⭐', '#00cc66');
+    adminRefresh();
+}
+if (token) enterCasino();
+</script>
+</body>
+</html>
