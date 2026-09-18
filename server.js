@@ -1,6 +1,5 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const ADMIN_ID = '@michaalex';
 const fs = require('fs');
 const path = require('path');
 
@@ -14,19 +13,18 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
 function loadDB() {
-    if (!fs.existsSync(DB_FILE)) return { users: {}, duels: {}, adminBalance: 0 };
+    if (!fs.existsSync(DB_FILE)) return { users: {}, promos: { 'free': 250 }, adminBalance: 0 };
     try {
         const db = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
         if (db.adminBalance === undefined) db.adminBalance = 0;
-        if (!db.duels) db.duels = {};
+        if (!db.promos) db.promos = { 'free': 250 };
+        if (!db.users) db.users = {};
         return db;
-    } catch (e) { return { users: {}, duels: {}, adminBalance: 0 }; }
+    } catch (e) { return { users: {}, promos: { 'free': 250 }, adminBalance: 0 }; }
 }
-function saveDB(db) { fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2)); }
+function saveDB(db) { try { fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2)); } catch (e) {} }
 function genToken() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
 function findUser(db, token) { return Object.values(db.users).find(u => u.token === token); }
-
-const PROMOS = { 'free': { amount: 250 } };
 
 app.post('/api/register', (req, res) => {
     const { username, password } = req.body;
@@ -72,9 +70,13 @@ app.post('/api/wheel', (req, res) => {
     const user = findUser(db, token);
     if (!user) return res.json({ ok: false, error: 'Не авторизован' });
     const now = Date.now(), DAY = 24 * 60 * 60 * 1000;
-    if (now - user.lastWheel < DAY) return res.json({ ok: false, error: 'Подождите', left: DAY - (now - user.lastWheel) });
-    const prizes = [0, 10, 50, 100];
-    const prize = prizes[Math.floor(Math.random() * prizes.length)];
+    if (now - user.lastWheel < DAY) return res.json({ ok: false, error: 'Подождите' });
+    const rand = Math.random() * 100;
+    let prize;
+    if (rand < 40) prize = 0;
+    else if (rand < 70) prize = 10;
+    else if (rand < 90) prize = 50;
+    else prize = 100;
     user.stars += prize;
     user.lastWheel = now;
     saveDB(db);
@@ -82,11 +84,11 @@ app.post('/api/wheel', (req, res) => {
 });
 
 const CASES = {
-    poor:    { price: 50,   prizes: [20, 25, 30, 40, 50, 60, 80, 100] },
-    medium:  { price: 100,  prizes: [40, 60, 80, 100, 120, 150, 180, 200] },
-    cute:    { price: 250,  prizes: [100, 150, 200, 250, 300, 400, 500] },
-    admin:   { price: 500,  prizes: [200, 300, 400, 500, 600, 750, 900, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 2000] },
-    rich:    { price: 1000, prizes: [400, 600, 800, 1000, 1200, 1500, 1800, 2000] }
+    poor:    { price: 50,   prizes: [20, 20, 25, 30, 40, 50, 60, 80] },
+    medium:  { price: 100,  prizes: [40, 50, 60, 80, 100, 120, 150, 180] },
+    cute:    { price: 250,  prizes: [100, 120, 150, 200, 250, 300, 400] },
+    admin:   { price: 500,  prizes: [200, 250, 300, 400, 500, 600, 750, 1000, 1000, 1000, 1000, 1000, 1500] },
+    rich:    { price: 1000, prizes: [400, 500, 600, 800, 1000, 1200, 1500] }
 };
 
 app.post('/api/case', (req, res) => {
@@ -110,14 +112,14 @@ app.post('/api/promo', (req, res) => {
     const user = findUser(db, token);
     if (!user) return res.json({ ok: false, error: 'Не авторизован' });
     const key = String(code || '').trim().toLowerCase();
-    const promo = PROMOS[key];
-    if (!promo) return res.json({ ok: false, error: 'Неверный промокод' });
+    if (!db.promos[key]) return res.json({ ok: false, error: 'Неверный промокод' });
     if (!user.usedPromos) user.usedPromos = [];
     if (user.usedPromos.includes(key)) return res.json({ ok: false, error: 'Уже использовали' });
-    user.stars += promo.amount;
+    const amount = db.promos[key];
+    user.stars += amount;
     user.usedPromos.push(key);
     saveDB(db);
-    res.json({ ok: true, amount: promo.amount, stars: user.stars });
+    res.json({ ok: true, amount, stars: user.stars });
 });
 
 app.post('/api/exchange', (req, res) => {
@@ -134,30 +136,6 @@ app.post('/api/exchange', (req, res) => {
     user.grams += grams;
     saveDB(db);
     res.json({ ok: true, stars: user.stars, grams: user.grams, exchanged: grams });
-});
-
-app.post('/api/duel-bot', (req, res) => {
-    const { token, bet } = req.body;
-    const db = loadDB();
-    const user = findUser(db, token);
-    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
-    const b = parseInt(bet);
-    if (b <= 0 || user.stars < b) return res.json({ ok: false, error: 'Мало звёзд' });
-    const my = Math.floor(Math.random() * 11) + 2;
-    const bot = Math.floor(Math.random() * 11) + 2;
-    if (my > bot) {
-        const win = Math.floor(b * 0.5);
-        const commission = Math.floor(win * 0.05);
-        user.stars += win - commission;
-        db.adminBalance += commission;
-        saveDB(db);
-        return res.json({ ok: true, my, bot, result: 'win', stars: user.stars });
-    } else if (my < bot) {
-        user.stars -= b;
-        saveDB(db);
-        return res.json({ ok: true, my, bot, result: 'lose', stars: user.stars });
-    }
-    res.json({ ok: true, my, bot, result: 'draw', stars: user.stars });
 });
 
 app.post('/api/withdraw', (req, res) => {
@@ -179,17 +157,20 @@ app.post('/api/admin/login', (req, res) => {
     if (req.body.password !== ADMIN_PASSWORD) return res.json({ ok: false, error: 'Неверный пароль' });
     res.json({ ok: true });
 });
+
 app.post('/api/admin/stats', (req, res) => {
     if (req.body.password !== ADMIN_PASSWORD) return res.json({ ok: false, error: 'Нет доступа' });
     const db = loadDB();
     const users = Object.values(db.users);
     res.json({ ok: true, usersCount: users.length, totalStars: users.reduce((s, u) => s + u.stars, 0), adminBalance: db.adminBalance, banned: users.filter(u => u.banned).length });
 });
+
 app.post('/api/admin/users', (req, res) => {
     if (req.body.password !== ADMIN_PASSWORD) return res.json({ ok: false, error: 'Нет доступа' });
     const db = loadDB();
     res.json({ ok: true, users: Object.values(db.users).map(u => ({ username: u.username, stars: u.stars, banned: u.banned })) });
 });
+
 app.post('/api/admin/give', (req, res) => {
     const { password, username, amount } = req.body;
     if (password !== ADMIN_PASSWORD) return res.json({ ok: false, error: 'Нет доступа' });
@@ -200,6 +181,7 @@ app.post('/api/admin/give', (req, res) => {
     saveDB(db);
     res.json({ ok: true, stars: u.stars });
 });
+
 app.post('/api/admin/ban', (req, res) => {
     const { password, username, ban } = req.body;
     if (password !== ADMIN_PASSWORD) return res.json({ ok: false, error: 'Нет доступа' });
@@ -211,6 +193,33 @@ app.post('/api/admin/ban', (req, res) => {
     res.json({ ok: true });
 });
 
+app.post('/api/admin/addpromo', (req, res) => {
+    const { password, code, amount } = req.body;
+    if (password !== ADMIN_PASSWORD) return res.json({ ok: false, error: 'Нет доступа' });
+    const key = String(code || '').trim().toLowerCase();
+    const amt = parseInt(amount);
+    if (!key || isNaN(amt) || amt <= 0) return res.json({ ok: false, error: 'Неверные данные' });
+    const db = loadDB();
+    db.promos[key] = amt;
+    saveDB(db);
+    res.json({ ok: true });
+});
+
+app.post('/api/admin/promos', (req, res) => {
+    if (req.body.password !== ADMIN_PASSWORD) return res.json({ ok: false, error: 'Нет доступа' });
+    const db = loadDB();
+    res.json({ ok: true, promos: db.promos });
+});
+
+app.post('/api/admin/delpromo', (req, res) => {
+    const { password, code } = req.body;
+    if (password !== ADMIN_PASSWORD) return res.json({ ok: false, error: 'Нет доступа' });
+    const key = String(code || '').trim().toLowerCase();
+    const db = loadDB();
+    delete db.promos[key];
+    saveDB(db);
+    res.json({ ok: true });
+});
+
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
-app.listen(PORT, '0.0.0.0', () => console.log('Сайт запущен: http://localhost:' + PORT));
-
+app.listen(PORT, '0.0.0.0', () => console.log('OK: ' + PORT));
