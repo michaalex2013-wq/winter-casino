@@ -9,163 +9,73 @@
 body { background: #050507; color: #fff; min-height: 100vh; padding-bottom: 110px; overflow-x: hidden; }
 .hidden { display: none !important; }
 
-/* ФОНОВЫЕ ПЯТНА */
-body::before {
-    content: ''; position: fixed; top: -200px; left: -100px;
-    width: 400px; height: 400px; border-radius: 50%;
-    background: radial-gradient(circle, rgba(168,85,247,0.15), transparent 70%);
-    z-index: -1; filter: blur(40px);
-}
-body::after {
-    content: ''; position: fixed; bottom: -200px; right: -100px;
-    width: 400px; height: 400px; border-radius: 50%;
-    background: radial-gradient(circle, rgba(236,72,153,0.12), transparent 70%);
-    z-index: -1; filter: blur(40px);
-}
+body::before { content: ''; position: fixed; top: -200px; left: -100px; width: 400px; height: 400px; border-radius: 50%; background: radial-gradient(circle, rgba(168,85,247,0.15), transparent 70%); z-index: -1; filter: blur(40px); }
+body::after { content: ''; position: fixed; bottom: -200px; right: -100px; width: 400px; height: 400px; border-radius: 50%; background: radial-gradient(circle, rgba(236,72,153,0.12), transparent 70%); z-index: -1; filter: blur(40px); }
+
+/* СТАРТОВЫЙ ЭКРАН */
+.start-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.start-box { background: rgba(20,20,25,0.8); backdrop-filter: blur(20px); border: 1px solid rgba(168,85,247,0.3); border-radius: 32px; padding: 50px 30px; width: 100%; max-width: 440px; text-align: center; box-shadow: 0 0 100px rgba(168,85,247,0.4); }
+.start-logo { font-size: 42px; font-weight: 900; background: linear-gradient(135deg, #a855f7, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 2px; margin-bottom: 8px; }
+.start-sub { font-size: 12px; color: #a855f7; letter-spacing: 6px; margin-bottom: 8px; font-weight: 800; }
+.start-welcome { font-size: 15px; color: #aaa; margin-bottom: 32px; line-height: 1.5; }
+.start-btn { width: 100%; padding: 20px; border: none; border-radius: 20px; font-size: 17px; font-weight: 900; cursor: pointer; background: linear-gradient(135deg, #a855f7, #ec4899); color: #fff; letter-spacing: 2px; box-shadow: 0 10px 40px rgba(168,85,247,0.6); }
+.start-btn:active { transform: scale(0.97); }
 
 /* АВТОРИЗАЦИЯ */
 .auth-bg { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
-.auth-box {
-    background: rgba(20,20,25,0.8);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(168,85,247,0.3);
-    border-radius: 28px; padding: 36px 26px;
-    width: 100%; max-width: 420px;
-    box-shadow: 0 0 80px rgba(168,85,247,0.3), inset 0 1px 0 rgba(255,255,255,0.1);
-}
-.auth-logo {
-    text-align: center; font-size: 38px; font-weight: 900;
-    background: linear-gradient(135deg, #a855f7, #ec4899);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    letter-spacing: 2px; margin-bottom: 4px;
-}
+.auth-box { background: rgba(20,20,25,0.8); backdrop-filter: blur(20px); border: 1px solid rgba(168,85,247,0.3); border-radius: 28px; padding: 36px 26px; width: 100%; max-width: 420px; box-shadow: 0 0 80px rgba(168,85,247,0.3); }
+.auth-logo { text-align: center; font-size: 34px; font-weight: 900; background: linear-gradient(135deg, #a855f7, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 2px; margin-bottom: 4px; }
 .auth-sub { text-align: center; font-size: 11px; color: #a855f7; letter-spacing: 6px; margin-bottom: 30px; font-weight: 800; }
-input {
-    width: 100%; padding: 16px 20px; margin: 6px 0;
-    background: rgba(0,0,0,0.5);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 18px; color: #fff; font-size: 14px;
-    transition: all 0.2s;
-}
+input { width: 100%; padding: 16px 20px; margin: 6px 0; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; color: #fff; font-size: 14px; }
 input:focus { outline: none; border-color: #a855f7; box-shadow: 0 0 20px rgba(168,85,247,0.3); }
-button {
-    width: 100%; padding: 16px; margin: 6px 0; border: none;
-    border-radius: 18px; font-size: 14px; font-weight: 800;
-    cursor: pointer; transition: all 0.15s;
-}
+button { width: 100%; padding: 16px; margin: 6px 0; border: none; border-radius: 18px; font-size: 14px; font-weight: 800; cursor: pointer; transition: all 0.15s; }
 button:active { transform: scale(0.97); }
-.btn-primary {
-    background: linear-gradient(135deg, #a855f7, #ec4899);
-    color: #fff; box-shadow: 0 8px 30px rgba(168,85,247,0.5);
-}
-.btn-glass {
-    background: rgba(255,255,255,0.05);
-    color: #ccc; border: 1px solid rgba(255,255,255,0.1);
-    backdrop-filter: blur(10px);
-}
+.btn-primary { background: linear-gradient(135deg, #a855f7, #ec4899); color: #fff; box-shadow: 0 8px 30px rgba(168,85,247,0.5); }
+.btn-glass { background: rgba(255,255,255,0.05); color: #ccc; border: 1px solid rgba(255,255,255,0.1); }
 .btn-green { background: #22c55e; color: #fff; }
 .btn-red { background: #ef4444; color: #fff; }
 button:disabled { opacity: 0.4; }
 
 /* ТОП */
-.topbar {
-    padding: 20px 18px 12px;
-    display: flex; align-items: center; gap: 12px;
-}
+.topbar { padding: 20px 18px 12px; display: flex; align-items: center; gap: 12px; }
 .topbar .back { font-size: 22px; color: #fff; width: 32px; }
 .topbar .title { font-size: 17px; font-weight: 800; flex: 1; letter-spacing: 0.5px; color: #fff; }
 .topbar .dots { font-size: 22px; color: #666; }
 
 /* ЮЗЕР ХЕДЕР */
-.user-header {
-    padding: 8px 18px 24px;
-    display: flex; align-items: center; gap: 14px;
-}
-.avatar {
-    width: 62px; height: 62px; border-radius: 50%;
-    background: linear-gradient(135deg, #a855f7, #ec4899);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 28px;
-    border: 2px solid rgba(255,255,255,0.1);
-    box-shadow: 0 0 30px rgba(168,85,247,0.5);
-}
+.user-header { padding: 8px 18px 24px; display: flex; align-items: center; gap: 14px; }
+.avatar { width: 62px; height: 62px; border-radius: 50%; background: linear-gradient(135deg, #a855f7, #ec4899); display: flex; align-items: center; justify-content: center; font-size: 28px; border: 2px solid rgba(255,255,255,0.1); box-shadow: 0 0 30px rgba(168,85,247,0.5); }
 .user-info { flex: 1; }
 .user-info .name { font-size: 17px; font-weight: 900; color: #fff; }
 .user-info .sub { font-size: 12px; color: #666; margin-top: 3px; display: flex; align-items: center; gap: 6px; }
 .user-info .sub::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 8px #22c55e; }
-.gift-btn {
-    background: linear-gradient(135deg, #a855f7, #ec4899);
-    color: #fff; padding: 12px 18px; border-radius: 26px;
-    font-size: 12px; font-weight: 900;
-    display: flex; align-items: center; gap: 6px;
-    width: auto; margin: 0;
-    box-shadow: 0 8px 30px rgba(236,72,153,0.4);
-}
+.gift-btn { background: linear-gradient(135deg, #a855f7, #ec4899); color: #fff; padding: 12px 18px; border-radius: 26px; font-size: 12px; font-weight: 900; display: flex; align-items: center; gap: 6px; width: auto; margin: 0; box-shadow: 0 8px 30px rgba(236,72,153,0.4); }
 
-/* БАЛАНС КРУПНЫЙ */
 .bal-main { padding: 0 18px 20px; }
 .bal-main .lbl { font-size: 12px; color: #666; margin-bottom: 8px; letter-spacing: 1px; font-weight: 700; text-transform: uppercase; }
 .bal-main .val { font-size: 44px; font-weight: 900; display: flex; align-items: center; gap: 12px; color: #fff; }
-.bal-main .val .coin {
-    width: 40px; height: 40px; border-radius: 50%;
-    background: linear-gradient(135deg, #a855f7, #ec4899);
-    display: flex; align-items: center; justify-content: center; font-size: 20px;
-    box-shadow: 0 0 20px rgba(168,85,247,0.6);
-}
+.bal-main .val .coin { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #a855f7, #ec4899); display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 0 20px rgba(168,85,247,0.6); }
 
-/* СТЕКЛЯННАЯ КАРТОЧКА */
-.glass {
-    background: rgba(20,20,25,0.6);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 22px; padding: 18px;
-    margin: 0 18px 16px;
-}
+.glass { background: rgba(20,20,25,0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.06); border-radius: 22px; padding: 18px; margin: 0 18px 16px; }
 .stake-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .stake-row .lbl { font-size: 10px; color: #666; letter-spacing: 1.5px; font-weight: 800; text-transform: uppercase; }
 .stake-row .apy { color: #22c55e; font-weight: 900; font-size: 15px; }
 .stake-desc { font-size: 13px; color: #888; line-height: 1.6; }
 
-/* БАЛАНС-КАРТОЧКИ */
 .bal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 18px; margin-bottom: 20px; }
-.bal-card {
-    background: rgba(20,20,25,0.6);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 22px; padding: 18px;
-    position: relative; overflow: hidden;
-}
-.bal-card::before {
-    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-    background: linear-gradient(90deg, #a855f7, #ec4899);
-}
+.bal-card { background: rgba(20,20,25,0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.06); border-radius: 22px; padding: 18px; position: relative; overflow: hidden; }
+.bal-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #a855f7, #ec4899); }
 .bal-card.blue::before { background: linear-gradient(90deg, #3b82f6, #06b6d4); }
 .bal-card .lbl { font-size: 10px; color: #666; letter-spacing: 1.5px; font-weight: 800; }
 .bal-card .val { font-size: 28px; font-weight: 900; color: #a855f7; margin-top: 8px; }
 .bal-card.blue .val { color: #06b6d4; }
 
-/* СЕКЦИИ */
 .section { padding: 0 18px; margin-bottom: 18px; }
 .section-title { font-size: 24px; font-weight: 900; color: #fff; margin-bottom: 16px; letter-spacing: -0.5px; }
 
-/* КЕЙСЫ */
 .case-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.case {
-    background: rgba(20,20,25,0.6);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 22px; padding: 24px 14px;
-    text-align: center; cursor: pointer;
-    transition: all 0.2s;
-    position: relative; overflow: hidden;
-}
+.case { background: rgba(20,20,25,0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.06); border-radius: 22px; padding: 24px 14px; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; }
 .case:active { transform: scale(0.96); border-color: #a855f7; }
-.case::before {
-    content: ''; position: absolute; top: -50%; left: -50%;
-    width: 200%; height: 200%; 
-    background: radial-gradient(circle, rgba(168,85,247,0.1), transparent 60%);
-    pointer-events: none;
-}
 .case .icon { font-size: 46px; margin-bottom: 10px; }
 .case .name { font-size: 13px; color: #fff; font-weight: 900; }
 .case .price { font-size: 13px; color: #a855f7; margin-top: 6px; font-weight: 900; }
@@ -173,66 +83,62 @@ button:disabled { opacity: 0.4; }
 
 /* КОЛЕСО */
 .wheel-wrap { position: relative; margin: 20px auto; width: 220px; height: 220px; }
-.wheel {
-    width: 220px; height: 220px; border-radius: 50%;
-    background: conic-gradient(#ef4444 0deg 90deg, #fbbf24 90deg 180deg, #22c55e 180deg 270deg, #3b82f6 270deg 360deg);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 60px; transition: transform 4s cubic-bezier(0.15, 0.7, 0.3, 1);
-    border: 4px solid rgba(255,255,255,0.1);
-    box-shadow: 0 0 60px rgba(168,85,247,0.4), inset 0 0 40px rgba(0,0,0,0.5);
-}
-.wheel-arrow { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 32px; color: #fff; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.8)); }
+.wheel { width: 220px; height: 220px; border-radius: 50%; background: conic-gradient(#22c55e 0deg 144deg, #3b82f6 144deg 252deg, #a855f7 252deg 324deg, #ec4899 324deg 360deg); display: flex; align-items: center; justify-content: center; font-size: 60px; transition: transform 4s cubic-bezier(0.15, 0.7, 0.3, 1); border: 4px solid rgba(168,85,247,0.5); box-shadow: 0 0 60px rgba(168,85,247,0.5); }
+.wheel-arrow { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 34px; color: #a855f7; filter: drop-shadow(0 0 12px #a855f7); }
 
-/* СТАТУС */
+/* ПРИЗЫ */
+.prizes-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 14px 0; }
+.prize-item { background: rgba(20,20,25,0.6); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; padding: 12px; text-align: center; }
+.prize-item .p-val { font-size: 18px; font-weight: 900; color: #fff; }
+.prize-item .p-chance { font-size: 11px; color: #a855f7; margin-top: 4px; font-weight: 700; }
+
 .status { text-align: center; font-size: 13px; margin: 10px 18px; min-height: 18px; white-space: pre-line; color: #666; }
 
-/* ПРОФИЛЬ */
-.prof-avatar {
-    width: 100px; height: 100px; border-radius: 50%;
-    background: linear-gradient(135deg, #a855f7, #ec4899);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 48px; margin: 0 auto 16px;
-    box-shadow: 0 0 50px rgba(168,85,247,0.6);
-    border: 3px solid rgba(255,255,255,0.1);
-}
+.prof-avatar { width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, #a855f7, #ec4899); display: flex; align-items: center; justify-content: center; font-size: 48px; margin: 0 auto 16px; box-shadow: 0 0 50px rgba(168,85,247,0.6); border: 3px solid rgba(255,255,255,0.1); }
 .prof-name { text-align: center; font-size: 24px; color: #fff; font-weight: 900; }
 
-/* НИЖНЕЕ МЕНЮ */
-.bottom-nav {
-    position: fixed; bottom: 16px; left: 16px; right: 16px;
-    background: rgba(20,20,25,0.85);
-    backdrop-filter: blur(30px);
-    border-radius: 30px;
-    display: flex; padding: 10px 8px; z-index: 100;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.1);
-    border: 1px solid rgba(255,255,255,0.06);
-}
-.bottom-nav button {
-    flex: 1; background: none; border: none; color: #666;
-    font-size: 10px; font-weight: 800; display: flex; flex-direction: column;
-    align-items: center; gap: 5px; padding: 8px 0; width: auto; margin: 0;
-    border-radius: 22px; transition: all 0.25s;
-}
+.bottom-nav { position: fixed; bottom: 16px; left: 16px; right: 16px; background: rgba(20,20,25,0.85); backdrop-filter: blur(30px); border-radius: 30px; display: flex; padding: 10px 8px; z-index: 100; box-shadow: 0 20px 60px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.06); }
+.bottom-nav button { flex: 1; background: none; border: none; color: #666; font-size: 10px; font-weight: 800; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 0; width: auto; margin: 0; border-radius: 22px; transition: all 0.25s; }
 .bottom-nav button .ni { font-size: 22px; }
-.bottom-nav button.active {
-    color: #fff;
-    background: linear-gradient(135deg, rgba(168,85,247,0.3), rgba(236,72,153,0.3));
-    box-shadow: 0 0 20px rgba(168,85,247,0.3);
-}
+.bottom-nav button.active { color: #fff; background: linear-gradient(135deg, rgba(168,85,247,0.3), rgba(236,72,153,0.3)); box-shadow: 0 0 20px rgba(168,85,247,0.3); }
+
+/* АДМИНКА — ДИЗАЙН С КАРТИНОК */
+.admin-wrap { background: #0a0a0c; padding: 16px; border-radius: 12px; margin: 0 18px 16px; border: 1px solid #1a1a1f; }
+.admin-block { background: #111114; border: 1px solid #1a1a1f; border-radius: 8px; padding: 16px; margin-bottom: 14px; }
+.admin-block-title { font-size: 15px; color: #fff; font-weight: 700; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid #1a1a1f; }
+.admin-table { width: 100%; font-size: 12px; }
+.admin-table th { text-align: left; padding: 10px 6px; color: #666; font-weight: 600; border-bottom: 1px solid #1a1a1f; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+.admin-table td { padding: 10px 6px; color: #ccc; border-bottom: 1px solid #141418; }
+.admin-table td:last-child { text-align: right; }
+.admin-row-btn { background: #1a1a1f; color: #ccc; border: 1px solid #252529; padding: 5px 10px; border-radius: 6px; font-size: 11px; width: auto; margin: 0 2px; cursor: pointer; }
+.admin-btn-red { background: #2a1215; color: #ff4444; border: 1px solid #4a1a1f; padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; width: 100%; margin-top: 8px; cursor: pointer; }
+.admin-btn-green { background: #0f2a1a; color: #22c55e; border: 1px solid #1a4a2a; padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; width: 100%; margin-top: 8px; cursor: pointer; }
+.admin-input { width: 100%; padding: 10px 14px; background: #0a0a0c; border: 1px solid #1a1a1f; border-radius: 8px; color: #fff; font-size: 13px; margin-bottom: 6px; }
+.admin-hint { font-size: 11px; color: #666; margin-top: 6px; }
 </style>
 </head>
 <body>
 
+<!-- СТАРТОВЫЙ ЭКРАН -->
+<div class="start-screen" id="startPage">
+    <div class="start-box">
+        <div class="start-logo">WINTER</div>
+        <div class="start-sub">CASINO · 2026</div>
+        <div class="start-welcome">Добро пожаловать в Winter Casino!<br>Нажмите старт, чтобы начать</div>
+        <button class="start-btn" onclick="showPage('authPage')">СТАРТ</button>
+    </div>
+</div>
+
 <!-- АВТОРИЗАЦИЯ -->
-<div class="auth-bg" id="authPage">
+<div class="auth-bg hidden" id="authPage">
     <div class="auth-box">
-        <div class="auth-logo">WINTER</div>
-        <div class="auth-sub">GIFT · 2026</div>
+        <div class="auth-logo">ВХОД</div>
+        <div class="auth-sub">WINTER CASINO</div>
         <input type="text" id="username" placeholder="@ Ник (мин 5 симв)">
         <input type="password" id="password" placeholder="Пароль">
         <button class="btn-primary" onclick="register()">🎁 Регистрация (+100)</button>
         <button class="btn-glass" onclick="login()">Войти</button>
-        <button class="btn-glass" onclick="showPage('adminLoginPage')">👑 Админ-панель</button>
+        <button class="btn-glass" onclick="showPage('startPage')">← Назад</button>
         <div class="status" id="authStatus"></div>
     </div>
 </div>
@@ -251,23 +157,32 @@ button:disabled { opacity: 0.4; }
 
 <!-- АДМИН ПАНЕЛЬ -->
 <div id="adminPage" class="hidden">
-    <div class="topbar"><div class="title">ADMIN</div></div>
-    <div class="section" style="margin-top:16px;">
-        <div class="section-title">📊 Статистика</div>
-        <div id="adminStats" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"></div>
-    </div>
-    <div class="section">
-        <div class="section-title">💰 Выдать</div>
-        <input type="text" id="adminGiveUser" placeholder="@ Ник игрока">
-        <input type="number" id="adminGiveAmount" placeholder="Сумма">
-        <button class="btn-primary" onclick="adminGive()">Выдать</button>
-    </div>
-    <div class="section">
-        <div class="section-title">👥 Юзеры</div>
-        <div id="adminUsersList"></div>
-        <button class="btn-glass" onclick="adminRefresh()">🔄 Обновить</button>
-        <button class="btn-red" onclick="adminLogout()">🚪 Выйти</button>
-        <div class="status" id="adminStatus"></div>
+    <div class="topbar"><div class="title">ADMIN PANEL</div></div>
+    <div class="admin-wrap">
+        <div class="admin-block">
+            <div class="admin-block-title">📊 Статистика</div>
+            <div id="adminStats" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"></div>
+        </div>
+        <div class="admin-block">
+            <div class="admin-block-title">💰 Выдать звёзды</div>
+            <input type="text" id="adminGiveUser" class="admin-input" placeholder="@ Ник игрока">
+            <input type="number" id="adminGiveAmount" class="admin-input" placeholder="Сумма">
+            <button class="admin-btn-green" onclick="adminGive()">ВЫДАТЬ</button>
+        </div>
+        <div class="admin-block">
+            <div class="admin-block-title">🎁 Промокоды</div>
+            <input type="text" id="promoCodeInput" class="admin-input" placeholder="Код (например: free2)">
+            <input type="number" id="promoAmountInput" class="admin-input" placeholder="Сумма (звёзды)">
+            <button class="admin-btn-green" onclick="adminAddPromo()">ДОБАВИТЬ</button>
+            <div id="promoList" style="margin-top:10px;"></div>
+        </div>
+        <div class="admin-block">
+            <div class="admin-block-title">👥 Пользователи</div>
+            <div id="adminUsersList"></div>
+            <button class="admin-btn-green" onclick="adminRefresh()">🔄 ОБНОВИТЬ</button>
+            <button class="admin-btn-red" onclick="adminLogout()">🚪 ВЫЙТИ</button>
+            <div class="status" id="adminStatus"></div>
+        </div>
     </div>
 </div>
 
@@ -314,17 +229,21 @@ button:disabled { opacity: 0.4; }
 
     <div class="status" id="mainStatus"></div>
 
-    <!-- КОЛЕСО -->
     <div id="tab-wheel">
         <div class="section">
             <div class="section-title">🎡 Колесо удачи</div>
             <div class="wheel-wrap"><div class="wheel-arrow">▼</div><div class="wheel" id="wheelEl">🎰</div></div>
+            <div class="prizes-list">
+                <div class="prize-item"><div class="p-val">0</div><div class="p-chance">40% шанс</div></div>
+                <div class="prize-item"><div class="p-val">10</div><div class="p-chance">30% шанс</div></div>
+                <div class="prize-item"><div class="p-val">50</div><div class="p-chance">20% шанс</div></div>
+                <div class="prize-item"><div class="p-val">100</div><div class="p-chance">10% шанс</div></div>
+            </div>
             <div class="status" id="wheelTimer"></div>
             <button class="btn-primary" onclick="spinWheel()" id="wheelBtn">🎡 Крутить</button>
         </div>
     </div>
 
-    <!-- КЕЙСЫ -->
     <div id="tab-cases" class="hidden">
         <div class="section">
             <div class="section-title">📦 Кейсы</div>
@@ -338,7 +257,6 @@ button:disabled { opacity: 0.4; }
         </div>
     </div>
 
-    <!-- ПРОМО -->
     <div id="tab-promo" class="hidden">
         <div class="section">
             <div class="section-title">🎁 Промокод</div>
@@ -348,46 +266,30 @@ button:disabled { opacity: 0.4; }
         </div>
     </div>
 
-    <!-- ОБМЕН -->
     <div id="tab-exchange" class="hidden">
         <div class="section">
             <div class="section-title">💎 Обмен</div>
-            <div class="glass" style="margin:0 0 12px;">
-                <div class="stake-desc">1000 звёзд = 1 грамм</div>
-            </div>
+            <div class="glass" style="margin:0 0 12px;"><div class="stake-desc">1000 звёзд = 1 грамм</div></div>
             <input type="number" id="exchangeAmount" placeholder="Сумма (кратно 1000)" step="1000">
             <button class="btn-primary" onclick="exchange()">Обменять</button>
             <div class="status" id="exchangeStatus"></div>
         </div>
     </div>
 
-    <!-- ПОПОЛНЕНИЕ -->
     <div id="tab-deposit" class="hidden">
         <div class="section">
             <div class="section-title">💳 Пополнение</div>
             <div class="glass" style="margin:0;">
-                <div class="stake-desc">
-                    Напишите в Wintegramm:<br>
-                    <b style="color:#a855f7;font-size:18px;">@gift</b><br><br>
-                    Скажите число звёзд<br><br>
-                    1 звезда в Wintegramm = 10 здесь
-                </div>
+                <div class="stake-desc">Напишите в Wintegramm:<br><b style="color:#a855f7;font-size:18px;">@gift</b><br><br>Скажите число звёзд<br><br>1 звезда в Wintegramm = 10 здесь</div>
             </div>
         </div>
     </div>
 
-    <!-- ВЫВОД -->
     <div id="tab-withdraw" class="hidden">
         <div class="section">
             <div class="section-title">💸 Вывод</div>
             <div class="glass" style="margin:0 0 12px;">
-                <div class="stake-desc">
-                    Напишите в Wintegramm:<br>
-                    <b style="color:#a855f7;font-size:18px;">@gift</b><br><br>
-                    Скажите: <b>Вывод</b><br>
-                    Укажите ваш баланс<br><br>
-                    <b>Минимум: 1000</b>
-                </div>
+                <div class="stake-desc">Напишите в Wintegramm:<br><b style="color:#a855f7;font-size:18px;">@gift</b><br><br>Скажите: <b>Вывод</b><br>Укажите ваш баланс<br><br><b>Минимум: 1000</b></div>
             </div>
             <input type="number" id="withdrawAmount" placeholder="Сумма (мин 1000)">
             <button class="btn-primary" onclick="withdraw()">Создать заявку</button>
@@ -395,7 +297,6 @@ button:disabled { opacity: 0.4; }
         </div>
     </div>
 
-    <!-- ПРОФИЛЬ -->
     <div id="tab-profile" class="hidden">
         <div style="padding:20px 18px;">
             <div class="prof-avatar">👤</div>
@@ -409,10 +310,15 @@ button:disabled { opacity: 0.4; }
             <button class="btn-glass" onclick="refreshProfile()">🔄 Обновить</button>
             <button class="btn-red" onclick="logout()">🚪 Выйти</button>
         </div>
+        <div class="section">
+            <div class="section-title" style="font-size:14px;color:#666;">🔒 Секретный код</div>
+            <input type="password" id="secretCode" placeholder="Введите код администратора">
+            <button class="btn-glass" onclick="checkSecretCode()">Открыть админ-меню</button>
+            <div class="status" id="secretStatus"></div>
+        </div>
     </div>
 </div>
 
-<!-- НИЖНЕЕ МЕНЮ -->
 <div class="bottom-nav hidden" id="bottomNav">
     <button class="active" onclick="showTab('wheel', this)" id="nav-wheel"><div class="ni">🎡</div>Колесо</button>
     <button onclick="showTab('cases', this)" id="nav-cases"><div class="ni">📦</div>Кейсы</button>
@@ -434,13 +340,13 @@ function st(id, msg, color) {
     if (e) { e.innerText = msg; e.style.color = color || '#666'; }
 }
 function showPage(id) {
-    ['authPage', 'adminLoginPage', 'adminPage', 'mainPage'].forEach(p => {
+    ['startPage', 'authPage', 'adminLoginPage', 'adminPage', 'mainPage'].forEach(p => {
         const el = document.getElementById(p);
         if (el) el.classList.add('hidden');
     });
     const target = document.getElementById(id);
     if (target) target.classList.remove('hidden');
-    const isAuth = (id === 'authPage' || id === 'adminLoginPage' || id === 'adminPage');
+    const isAuth = (id === 'startPage' || id === 'authPage' || id === 'adminLoginPage' || id === 'adminPage');
     const nav = document.getElementById('bottomNav');
     if (nav) nav.classList.toggle('hidden', isAuth);
 }
@@ -462,6 +368,23 @@ async function login() {
 }
 function enter() { showPage('mainPage'); refreshProfile(); }
 function logout() { localStorage.removeItem('token'); location.reload(); }
+
+// СЕКРЕТНЫЙ КОД АДМИНА
+function checkSecretCode() {
+    const code = document.getElementById('secretCode').value;
+    if (code === '30031985') {
+        adminPass = '30031985';
+        document.getElementById('secretCode').value = '';
+        st('secretStatus', '✅ Доступ разрешён', '#22c55e');
+        setTimeout(() => {
+            showPage('adminPage');
+            adminRefresh();
+        }, 500);
+    } else {
+        st('secretStatus', '❌ Неверный код', '#ef4444');
+    }
+}
+
 async function refreshProfile() {
     const r = await api('/api/profile', { token });
     if (!r.ok) return st('mainStatus', '❌ ' + r.error, '#ef4444');
@@ -533,34 +456,62 @@ async function withdraw() {
     st('withdrawStatus', '✅ ' + r.message, '#22c55e');
     refreshProfile();
 }
-async function adminLogin() {
-    const p = document.getElementById('adminPass').value;
-    const r = await api('/api/admin/login', { password: p });
-    if (!r.ok) return st('adminLoginStatus', '❌ ' + r.error, '#ef4444');
-    adminPass = p;
-    showPage('adminPage');
-    adminRefresh();
-}
-function adminLogout() { adminPass = ''; showPage('authPage'); }
+function adminLogout() { adminPass = ''; showPage('mainPage'); }
+
 async function adminRefresh() {
     const s = await api('/api/admin/stats', { password: adminPass });
     if (!s.ok) return st('adminStatus', '❌ ' + s.error, '#ef4444');
     document.getElementById('adminStats').innerHTML =
-        '<div class="glass" style="margin:0;text-align:center;padding:16px;"><div style="font-size:24px;font-weight:900;">' + s.usersCount + '</div><div style="font-size:11px;color:#666;">Игроков</div></div>' +
-        '<div class="glass" style="margin:0;text-align:center;padding:16px;"><div style="font-size:24px;font-weight:900;color:#a855f7;">' + s.totalStars + '</div><div style="font-size:11px;color:#666;">Всего</div></div>' +
-        '<div class="glass" style="margin:0;text-align:center;padding:16px;"><div style="font-size:24px;font-weight:900;color:#22c55e;">' + s.adminBalance + '</div><div style="font-size:11px;color:#666;">Комиссия</div></div>' +
-        '<div class="glass" style="margin:0;text-align:center;padding:16px;"><div style="font-size:24px;font-weight:900;color:#ef4444;">' + s.banned + '</div><div style="font-size:11px;color:#666;">Бан</div></div>';
+        '<div style="background:#0a0a0c;border:1px solid #1a1a1f;border-radius:8px;padding:14px;text-align:center;"><div style="font-size:22px;font-weight:900;color:#fff;">' + s.usersCount + '</div><div style="font-size:11px;color:#666;margin-top:4px;">Игроков</div></div>' +
+        '<div style="background:#0a0a0c;border:1px solid #1a1a1f;border-radius:8px;padding:14px;text-align:center;"><div style="font-size:22px;font-weight:900;color:#a855f7;">' + s.totalStars + '</div><div style="font-size:11px;color:#666;margin-top:4px;">Всего 🎁</div></div>' +
+        '<div style="background:#0a0a0c;border:1px solid #1a1a1f;border-radius:8px;padding:14px;text-align:center;"><div style="font-size:22px;font-weight:900;color:#22c55e;">' + s.adminBalance + '</div><div style="font-size:11px;color:#666;margin-top:4px;">Комиссия</div></div>' +
+        '<div style="background:#0a0a0c;border:1px solid #1a1a1f;border-radius:8px;padding:14px;text-align:center;"><div style="font-size:22px;font-weight:900;color:#ef4444;">' + s.banned + '</div><div style="font-size:11px;color:#666;margin-top:4px;">Забанено</div></div>';
+
     const u = await api('/api/admin/users', { password: adminPass });
     if (!u.ok) return;
-    document.getElementById('adminUsersList').innerHTML = u.users.map(x =>
-        '<div class="glass" style="margin:8px 0;padding:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">' +
-        '<div style="font-size:13px;"><b>' + x.username + '</b> — ' + x.stars + ' 🎁 ' + (x.banned ? '🚫' : '') + '</div>' +
-        '<div>' +
-        '<button class="btn-green" style="width:auto;padding:6px 12px;font-size:11px;margin:0;display:inline-block;" onclick="quickGive(\'' + x.username + '\',1000)">+1000</button> ' +
-        '<button class="btn-red" style="width:auto;padding:6px 12px;font-size:11px;margin:0;display:inline-block;" onclick="toggleBan(\'' + x.username + '\',' + (!x.banned) + ')">' + (x.banned ? 'Разбан' : 'Бан') + '</button>' +
-        '</div></div>'
+    document.getElementById('adminUsersList').innerHTML =
+        '<table class="admin-table"><thead><tr><th>Ник</th><th>Баланс</th><th></th></tr></thead><tbody>' +
+        u.users.map(x =>
+            '<tr><td>' + x.username + (x.banned ? ' 🚫' : '') + '</td><td>' + x.stars + '</td>' +
+            '<td><button class="admin-row-btn" onclick="quickGive(\'' + x.username + '\',1000)">+1000</button>' +
+            '<button class="admin-row-btn" onclick="toggleBan(\'' + x.username + '\',' + (!x.banned) + ')">' + (x.banned ? 'Разбан' : 'Бан') + '</button></td></tr>'
+        ).join('') + '</tbody></table>';
+
+    loadPromos();
+}
+
+async function loadPromos() {
+    const p = await api('/api/admin/promos', { password: adminPass });
+    if (!p.ok) return;
+    const list = Object.entries(p.promos);
+    if (list.length === 0) {
+        document.getElementById('promoList').innerHTML = '<div style="font-size:12px;color:#666;text-align:center;padding:10px;">Промокодов нет</div>';
+        return;
+    }
+    document.getElementById('promoList').innerHTML = list.map(([code, amount]) =>
+        '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #1a1a1f;">' +
+        '<div style="font-size:13px;"><b style="color:#a855f7;">' + code + '</b> — ' + amount + ' 🎁</div>' +
+        '<button class="admin-row-btn" onclick="delPromo(\'' + code + '\')">Удалить</button></div>'
     ).join('');
 }
+
+async function adminAddPromo() {
+    const code = document.getElementById('promoCodeInput').value.trim();
+    const amount = parseInt(document.getElementById('promoAmountInput').value);
+    if (!code || !amount) return st('adminStatus', '❌ Заполните поля', '#ef4444');
+    const r = await api('/api/admin/addpromo', { password: adminPass, code, amount });
+    if (!r.ok) return st('adminStatus', '❌ ' + r.error, '#ef4444');
+    st('adminStatus', '✅ Промокод добавлен', '#22c55e');
+    document.getElementById('promoCodeInput').value = '';
+    document.getElementById('promoAmountInput').value = '';
+    loadPromos();
+}
+
+async function delPromo(code) {
+    await api('/api/admin/delpromo', { password: adminPass, code });
+    loadPromos();
+}
+
 async function adminGive() {
     const u = document.getElementById('adminGiveUser').value.trim();
     const a = parseInt(document.getElementById('adminGiveAmount').value);
