@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 const DB_FILE = './db.json';
 const ADMIN_PASSWORD = '30031985';
 
@@ -25,15 +25,21 @@ function saveDB(db) { fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2)); }
 function genToken() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
 function findUser(db, token) { return Object.values(db.users).find(u => u.token === token); }
 
+const PROMOS = {
+    'free': { amount: 250, label: 'Free' }
+};
+
 app.post('/api/register', (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) return res.json({ ok: false, error: 'Заполните поля' });
     if (!username.startsWith('@')) return res.json({ ok: false, error: 'Ник должен начинаться с @' });
+    const nameOnly = username.slice(1);
+    if (nameOnly.length < 5) return res.json({ ok: false, error: 'Ник минимум 5 символов после @' });
     if (password.length < 4) return res.json({ ok: false, error: 'Пароль минимум 4 символа' });
     const db = loadDB();
     if (db.users[username]) return res.json({ ok: false, error: 'Ник занят' });
     const token = genToken();
-    db.users[username] = { username, password, token, stars: 100, lastWheel: 0, inventory: [], banned: false, created: Date.now() };
+    db.users[username] = { username, password, token, stars: 100, grams: 0, lastWheel: 0, inventory: [], banned: false, created: Date.now(), usedPromos: [] };
     saveDB(db);
     res.json({ ok: true, token, username });
 });
@@ -56,9 +62,10 @@ app.post('/api/profile', (req, res) => {
     const user = findUser(db, token);
     if (!user) return res.json({ ok: false, error: 'Не авторизован' });
     if (user.banned) return res.json({ ok: false, error: 'Вы забанены' });
+    if (user.grams === undefined) user.grams = 0;
     const now = Date.now();
     const left = Math.max(0, 24 * 60 * 60 * 1000 - (now - user.lastWheel));
-    res.json({ ok: true, username: user.username, stars: user.stars, inventory: user.inventory, wheelLeft: left });
+    res.json({ ok: true, username: user.username, stars: user.stars, grams: user.grams, inventory: user.inventory, wheelLeft: left });
 });
 
 app.post('/api/wheel', (req, res) => {
@@ -67,9 +74,7 @@ app.post('/api/wheel', (req, res) => {
     const user = findUser(db, token);
     if (!user) return res.json({ ok: false, error: 'Не авторизован' });
     const now = Date.now(), DAY = 24 * 60 * 60 * 1000;
-    if (now - user.lastWheel < DAY) {
-        return res.json({ ok: false, error: 'Подождите', left: DAY - (now - user.lastWheel) });
-    }
+    if (now - user.lastWheel < DAY) return res.json({ ok: false, error: 'Подождите', left: DAY - (now - user.lastWheel) });
     const prizes = [0, 10, 50, 100];
     const prize = prizes[Math.floor(Math.random() * prizes.length)];
     user.stars += prize;
@@ -79,11 +84,11 @@ app.post('/api/wheel', (req, res) => {
 });
 
 const CASES = {
-    poor:    { price: 50,   prizes: [20, 30, 40, 60, 80, 100] },
-    medium:  { price: 100,  prizes: [40, 70, 100, 150, 180, 200] },
-    cute:    { price: 250,  prizes: [100, 150, 250, 350, 450, 500] },
-    admin:   { price: 500,  prizes: [200, 300, 500, 700, 900, 1000] },
-    rich:    { price: 1000, prizes: [400, 600, 1000, 1400, 1800, 2000] }
+    poor:    { price: 50,   prizes: [20, 25, 30, 40, 50, 60, 80, 100] },
+    medium:  { price: 100,  prizes: [40, 60, 80, 100, 120, 150, 180, 200] },
+    cute:    { price: 250,  prizes: [100, 150, 200, 250, 300, 400, 500] },
+    admin:   { price: 500,  prizes: [200, 300, 400, 500, 600, 750, 900, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 2000] },
+    rich:    { price: 1000, prizes: [400, 600, 800, 1000, 1200, 1500, 1800, 2000] }
 };
 
 app.post('/api/case', (req, res) => {
@@ -99,6 +104,39 @@ app.post('/api/case', (req, res) => {
     user.stars += prize;
     saveDB(db);
     res.json({ ok: true, prize, stars: user.stars });
+});
+
+app.post('/api/promo', (req, res) => {
+    const { token, code } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    const key = String(code || '').trim().toLowerCase();
+    const promo = PROMOS[key];
+    if (!promo) return res.json({ ok: false, error: 'Неверный промокод' });
+    if (!user.usedPromos) user.usedPromos = [];
+    if (user.usedPromos.includes(key)) return res.json({ ok: false, error: 'Вы уже использовали этот промокод' });
+    user.stars += promo.amount;
+    user.usedPromos.push(key);
+    saveDB(db);
+    res.json({ ok: true, amount: promo.amount, stars: user.stars });
+});
+
+app.post('/api/exchange', (req, res) => {
+    const { token, stars } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    if (user.grams === undefined) user.grams = 0;
+    const amt = parseInt(stars);
+    if (isNaN(amt) || amt < 1000) return res.json({ ok: false, error: 'Минимум 1000 звёзд' });
+    if (amt % 1000 !== 0) return res.json({ ok: false, error: 'Только кратно 1000' });
+    if (user.stars < amt) return res.json({ ok: false, error: 'Недостаточно звёзд' });
+    const grams = amt / 1000;
+    user.stars -= amt;
+    user.grams += grams;
+    saveDB(db);
+    res.json({ ok: true, stars: user.stars, grams: user.grams, exchanged: grams });
 });
 
 app.post('/api/duel-bot', (req, res) => {
