@@ -439,6 +439,142 @@ button:disabled { opacity: 0.4; }
 </div>
 
 <div id="gameHilo" class="hidden">
+<div id="gameBaccarat" class="hidden">
+    <div class="topbar"><div class="back" onclick="showPage('gamesPage')">←</div><div class="title">Бакара</div></div>
+    <div class="section">
+        <div class="glass"><div class="stake-desc">Ставь на Игрока (x2), Банкира (x1.95) или Ничью (x9).</div></div>
+        <input type="number" id="bacBet" placeholder="Ставка" value="50">
+        <div style="display:flex;gap:6px;margin:10px 0;">
+            <button class="btn-glass" onclick="bacPlay('player')">👤 ИГРОК x2</button>
+            <button class="btn-glass" onclick="bacPlay('banker')">🏦 БАНКИР x1.95</button>
+            <button class="btn-primary" onclick="bacPlay('tie')">🤝 НИЧЬЯ x9</button>
+        </div>
+        <div class="glass">
+            <div style="font-size:13px;color:#666;">Игрок: <span id="bacPv">-</span></div>
+            <div id="bacPlayer" style="font-size:22px;margin:8px 0;">-</div>
+            <div style="font-size:13px;color:#666;">Банкир: <span id="bacBv">-</span></div>
+            <div id="bacBanker" style="font-size:22px;margin:8px 0;">-</div>
+        </div>
+        <div class="status" id="bacStatus"></div>
+    </div>
+</div>
+
+<div id="gameShooter" class="hidden">
+    <div class="topbar"><div class="back" onclick="showPage('gamesPage')">←</div><div class="title">Тир</div></div>
+    <div class="section">
+        <div class="glass"><div class="stake-desc">Стреляй по 5 мишеням. Маленькие — больше множитель.</div></div>
+        <input type="number" id="shooterBet" placeholder="Ставка" value="50">
+        <button class="btn-primary" onclick="shooterPlay()">🎯 СТРЕЛЯТЬ</button>
+        <div id="shooterTargets" style="display:flex;justify-content:space-around;margin:20px 0;min-height:80px;"></div>
+        <div class="status" id="shooterStatus"></div>
+    </div>
+</div>
+
+<div id="gameCraps" class="hidden">
+    <div class="topbar"><div class="back" onclick="showPage('gamesPage')">←</div><div class="title">Кости</div></div>
+    <div class="section">
+        <div class="glass"><div class="stake-desc">Pass (7/11), Don't Pass (2/3), Seven (x5), Craps (x8).</div></div>
+        <input type="number" id="crapsBet" placeholder="Ставка" value="50">
+        <div class="dice-display"><div class="dice" id="cr1">?</div><div class="dice" id="cr2">?</div></div>
+        <button class="btn-primary" onclick="crapsRoll('pass')">PASS (7/11)</button>
+        <button class="btn-glass" onclick="crapsRoll('dontpass')">DON'T PASS</button>
+        <button class="btn-gold" onclick="crapsRoll('seven')">SEVEN x5</button>
+        <button class="btn-red" onclick="crapsRoll('craps')">CRAPS x8</button>
+        <div class="status" id="crapsStatus"></div>
+    </div>
+</div>
+
+<div id="gameRouletteAdv" class="hidden">
+    <div class="topbar"><div class="back" onclick="showPage('gamesPage')">←</div><div class="title">Рулетка PRO</div></div>
+    <div class="section">
+        <div class="glass"><div class="stake-desc">Ставки: цвет (x2/x14), число (x36), дюжина (x3), чёт/нечет (x2), диапазон (x2).</div></div>
+        <input type="number" id="raBet" placeholder="Ставка" value="50">
+        <div class="roulette-wheel" id="raWheel">🎡</div>
+        <div class="roulette-result" id="raResult"></div>
+        <div class="glass">
+            <div style="font-size:12px;color:#666;margin-bottom:6px;">ЦВЕТ</div>
+            <button class="btn-red" onclick="raPlay('color','red')">🔴 КРАСНОЕ x2</button>
+            <button class="btn-glass" onclick="raPlay('color','black')">⚫ ЧЁРНОЕ x2</button>
+            <button class="btn-green" onclick="raPlay('color','green')">🟢 ЗЕЛЁНОЕ x14</button>
+            <div style="font-size:12px;color:#666;margin:10px 0 6px;">ЧИСЛО (0-36)</div>
+            <input type="number" id="raNumber" placeholder="Число" min="0" max="36">
+            <button class="btn-gold" onclick="raPlay('number', document.getElementById('raNumber').value)">🎯 ЧИСЛО x36</button>
+            <div style="font-size:12px;color:#666;margin:10px 0 6px;">ДЮЖИНА</div>
+            <button class="btn-glass" onclick="raPlay('dozen','1')">1-12 x3</button>
+            <button class="btn-glass" onclick="raPlay('dozen','2')">13-24 x3</button>
+            <button class="btn-glass" onclick="raPlay('dozen','3')">25-36 x3</button>
+            <div style="font-size:12px;color:#666;margin:10px 0 6px;">ЧЁТ/НЕЧЕТ</div>
+            <button class="btn-glass" onclick="raPlay('parity','even')">ЧЁТ x2</button>
+            <button class="btn-glass" onclick="raPlay('parity','odd')">НЕЧЕТ x2</button>
+            <div style="font-size:12px;color:#666;margin:10px 0 6px;">ДИАПАЗОН</div>
+            <button class="btn-glass" onclick="raPlay('half','low')">1-18 x2</button>
+            <button class="btn-glass" onclick="raPlay('half','high')">19-36 x2</button>
+        </div>
+        <div class="status" id="raStatus"></div>
+    </div>
+</div>
+<div class="game-card" onclick="openGame('hilo')"><div class="gc-icon">🔺</div><div class="gc-name">Хай-Лоу</div><div class="gc-desc">Больше/меньше</div></div>
+<div class="game-card" onclick="openGame('baccarat')"><div class="gc-icon">🎴</div><div class="gc-name">Бакара</div><div class="gc-desc">Игрок / Банкир</div></div>
+<div class="game-card" onclick="openGame('shooter')"><div class="gc-icon">🎯</div><div class="gc-name">Тир</div><div class="gc-desc">5 мишеней</div></div>
+<div class="game-card" onclick="openGame('craps')"><div class="gc-icon">🎲</div><div class="gc-name">Кости</div><div class="gc-desc">Craps</div></div>
+<div class="game-card" onclick="openGame('roulette-adv')"><div class="gc-icon">🎰</div><div class="gc-name">Рулетка PRO</div><div class="gc-desc">Числа / дюжины</div></div>
+const map = { wheel: 'gameWheel', crash: 'gameCrash', 'dice-bot': 'gameDiceBot', 'dice-player': 'gameDicePlayer', mines: 'gameMines', plinko: 'gamePlinko', roulette: 'gameRoulette', blackjack: 'gameBlackjack', keno: 'gameKeno', hilo: 'gameHilo' };
+// БАКАРА
+async function bacPlay(side) {
+    const bet = parseInt(document.getElementById('bacBet').value);
+    const r = await api('/api/baccarat-start', { token, bet, side });
+    if (!r.ok) return st('bacStatus', '❌ ' + r.error, '#ef4444');
+    document.getElementById('bacPlayer').innerText = r.player.map(c => c.v + c.s).join(' ');
+    document.getElementById('bacBanker').innerText = r.banker.map(c => c.v + c.s).join(' ');
+    document.getElementById('bacPv').innerText = r.pv;
+    document.getElementById('bacBv').innerText = r.bv;
+    if (r.result === 'win') st('bacStatus', '🏆 ' + r.winner + '! +' + r.win, '#22c55e');
+    else st('bacStatus', '💀 Победил ' + r.winner, '#ef4444');
+    refreshProfile();
+}
+
+// ТИР
+async function shooterPlay() {
+    const bet = parseInt(document.getElementById('shooterBet').value);
+    const r = await api('/api/shooter-start', { token, bet });
+    if (!r.ok) return st('shooterStatus', '❌ ' + r.error, '#ef4444');
+    const box = document.getElementById('shooterTargets');
+    box.innerHTML = r.targets.map(t =>
+        '<div style="text-align:center;"><div style="font-size:40px;">' + (t.hit ? '🎯' : '❌') + '</div><div style="font-size:12px;color:' + (t.hit ? '#22c55e' : '#666') + ';">x' + t.mult + '</div></div>'
+    ).join('');
+    if (r.win > 0) st('shooterStatus', '🎉 Множитель x' + r.totalMult.toFixed(2) + ' | +' + r.win, '#22c55e');
+    else st('shooterStatus', '💀 Все промахи', '#ef4444');
+    refreshProfile();
+}
+
+// КОСТИ
+async function crapsRoll(betType) {
+    const bet = parseInt(document.getElementById('crapsBet').value);
+    const r = await api('/api/craps-roll', { token, bet, betType });
+    if (!r.ok) return st('crapsStatus', '❌ ' + r.error, '#ef4444');
+    document.getElementById('cr1').innerText = r.d1;
+    document.getElementById('cr2').innerText = r.d2;
+    if (r.win) st('crapsStatus', '🏆 Выпало ' + r.sum + '! +' + r.prize, '#22c55e');
+    else if (r.prize === 0 && r.mult === 1) st('crapsStatus', '🤝 Ничья', '#666');
+    else st('crapsStatus', '💀 Выпало ' + r.sum + '. -' + bet, '#ef4444');
+    refreshProfile();
+}
+
+// РУЛЕТКА PRO
+async function raPlay(betType, betValue) {
+    const bet = parseInt(document.getElementById('raBet').value);
+    const r = await api('/api/roulette-adv', { token, bet, betType, betValue });
+    if (!r.ok) return st('raStatus', '❌ ' + r.error, '#ef4444');
+    const w = document.getElementById('raWheel');
+    w.style.transform = 'rotate(1080deg)';
+    setTimeout(() => { w.style.transform = 'rotate(0deg)'; }, 800);
+    document.getElementById('raResult').innerText = r.result + ' (' + r.color + ')';
+    if (r.win) st('raStatus', '🏆 x' + r.mult + ' | +' + r.prize, '#22c55e');
+    else st('raStatus', '💀 Выпало ' + r.result, '#ef4444');
+    refreshProfile();
+}
+
+<div id="gameHilo" class="hidden">
     <div class="topbar"><div class="back" onclick="showPage('gamesPage')">←</div><div class="title">Хай-Лоу</div></div>
     <div class="section">
         <input type="number" id="hiloBet" placeholder="Ставка" value="50">
