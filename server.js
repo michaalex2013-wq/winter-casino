@@ -8,13 +8,51 @@ const PORT = process.env.PORT || 3000;
 const DB_FILE = './db.json';
 const ADMIN_PASSWORD = '30031985';
 
-// Rate-limit хранилище (в памяти)
-const loginAttempts = {};   // { ip: { count, blockedUntil } }
-const registerAttempts = {}; // { ip: { count, resetAt } }
-const chatCooldown = {};     // { username: lastTime }
+// ========== ЗАЩИТА ОТ DDOS ==========
+const globalLimiter = {};     // общий лимит на IP
+const gameLimiter = {};       // лимит на игровые запросы
+const blacklist = {};         // заблокированные IP
+const loginAttempts = {};
+const registerAttempts = {};
+const chatCooldown = {};
 
-app.use(bodyParser.json({ limit: '50kb' }));
-app.use(bodyParser.urlencoded({ extended: true, limit: '50kb' }));
+function getIP(req) {
+    return (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip || 'unknown';
+}
+
+// ГЛОБАЛЬНЫЙ RATE-LIMIT: 100 запросов в минуту, 300+ = блок на 10 мин
+app.use((req, res, next) => {
+    const ip = getIP(req);
+    const now = Date.now();
+
+    // Проверка чёрного списка
+    if (blacklist[ip] && blacklist[ip] > now) {
+        return res.status(429).json({ error: 'IP заблокирован' });
+    }
+
+    if (!globalLimiter[ip]) globalLimiter[ip] = { count: 1, reset: now + 60000 };
+    else {
+        if (now > globalLimiter[ip].reset) globalLimiter[ip] = { count: 1, reset: now + 60000 };
+        else globalLimiter[ip].count++;
+    }
+
+    // Если больше 300 запросов в минуту — в бан на 10 минут
+    if (globalLimiter[ip].count > 300) {
+        blacklist[ip] = now + 10 * 60 * 1000;
+        return res.status(429).json({ error: 'Слишком много запросов. Блок на 10 минут.' });
+    }
+
+    // Если больше 100 — просто отказ
+    if (globalLimiter[ip].count > 100) {
+        return res.status(429).json({ error: 'Слишком много запросов. Подождите минуту.' });
+    }
+
+    next();
+});
+
+// ОГРАНИЧЕНИЕ РАЗМЕРА ТЕЛА ЗАПРОСА
+app.use(bodyParser.json({ limit: '10kb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '10kb' }));
 app.use(express.static('public'));
 
 // SECURITY HEADERS
@@ -27,6 +65,22 @@ app.use((req, res, next) => {
     next();
 });
 
+// ЛИМИТ НА ИГРОВЫЕ ЗАПРОСЫ: 30 в минуту
+function gameLimit(req, res, next) {
+    const ip = getIP(req);
+    const now = Date.now();
+    if (!gameLimiter[ip]) gameLimiter[ip] = { count: 1, reset: now + 60000 };
+    else {
+        if (now > gameLimiter[ip].reset) gameLimiter[ip] = { count: 1, reset: now + 60000 };
+        else gameLimiter[ip].count++;
+    }
+    if (gameLimiter[ip].count > 30) {
+        return res.status(429).json({ error: 'Слишком много игр. Подождите.' });
+    }
+    next();
+}
+
+// ========== БАЗА ==========
 function defaultDB() {
     return { users: {}, promos: { 'free': { amount: 250, limit: 100, used: 0 } }, adminBalance: 0, withdrawals: [], diceDuels: {}, adminSessions: {}, failedLogins: [], mines: {}, chat: [] };
 }
@@ -77,16 +131,12 @@ function giveAch(db, user, id) {
     if (!user.achievements) user.achievements = [];
     if (!user.achievements.includes(id)) user.achievements.push(id);
 }
-
-// ВАЛИДАЦИЯ НИКА
 function validateUsername(u) {
     if (!u || typeof u !== 'string') return false;
     if (!u.startsWith('@')) return false;
     if (u.length < 6 || u.length > 32) return false;
     return /^@[a-zA-Z0-9_]+$/.test(u);
 }
-
-// RATE-LIMIT ДЛЯ ЛОГИНА (по IP)
 function checkLoginRate(ip) {
     const now = Date.now();
     const a = loginAttempts[ip] || { count: 0, blockedUntil: 0 };
@@ -100,8 +150,6 @@ function recordLoginFail(ip) {
     if (a.count >= 5) { a.blockedUntil = now + 15 * 60 * 1000; a.count = 0; }
     loginAttempts[ip] = a;
 }
-
-// RATE-LIMIT ДЛЯ РЕГИСТРАЦИИ (3 в час с IP)
 function checkRegisterRate(ip) {
     const now = Date.now();
     const r = registerAttempts[ip] || { count: 0, resetAt: now + 60 * 60 * 1000 };
@@ -117,21 +165,17 @@ function recordRegister(ip) {
     registerAttempts[ip] = r;
 }
 
-// РЕГИСТРАЦИЯ
 app.post('/api/register', (req, res) => {
-    const ip = req.ip || 'unknown';
+    const ip = getIP(req);
     const rate = checkRegisterRate(ip);
     if (rate.blocked) return res.json({ ok: false, error: 'Слишком много попыток. Подождите ' + rate.wait + ' мин.' });
-
     const { username, password } = req.body;
     if (!username || !password) return res.json({ ok: false, error: 'Заполните поля' });
     if (!validateUsername(username)) return res.json({ ok: false, error: 'Ник: @ + 5-31 символов (латиница, цифры, _)' });
     if (typeof password !== 'string' || password.length < 6) return res.json({ ok: false, error: 'Пароль минимум 6 символов' });
     if (password.length > 128) return res.json({ ok: false, error: 'Пароль слишком длинный' });
-
     const db = loadDB();
     if (db.users[username]) return res.json({ ok: false, error: 'Ник занят' });
-
     recordRegister(ip);
     const token = genToken();
     db.users[username] = { username, password, token, stars: 100, grams: 0, lastWheel: 0, banned: false, frozen: false, created: Date.now(), usedPromos: [], achievements: [], prefix: '', bets: 0 };
@@ -139,16 +183,13 @@ app.post('/api/register', (req, res) => {
     res.json({ ok: true, token, username });
 });
 
-// ЛОГИН — всегда одна и та же ошибка, независимо от причины
 app.post('/api/login', (req, res) => {
-    const ip = req.ip || 'unknown';
+    const ip = getIP(req);
     const rate = checkLoginRate(ip);
     if (rate.blocked) return res.json({ ok: false, error: 'Слишком много попыток. Подождите ' + rate.wait + ' мин.' });
-
     const { username, password } = req.body;
     const db = loadDB();
     const u = db.users[username];
-    // Всегда одна ошибка — не палим, существует ли юзер
     if (!u || u.password !== password) {
         recordLoginFail(ip);
         return res.json({ ok: false, error: 'Неверный логин или пароль' });
@@ -186,7 +227,7 @@ app.post('/api/users', (req, res) => {
     res.json({ ok: true, users: list, me: me.username });
 });
 
-app.post('/api/wheel', (req, res) => {
+app.post('/api/wheel', gameLimit, (req, res) => {
     const { token } = req.body;
     const db = loadDB();
     const user = findUser(db, token);
@@ -207,7 +248,7 @@ app.post('/api/wheel', (req, res) => {
     res.json({ ok: true, prize, stars: user.stars });
 });
 
-app.post('/api/crash', (req, res) => {
+app.post('/api/crash', gameLimit, (req, res) => {
     const { token, bet, target } = req.body;
     const db = loadDB();
     const user = findUser(db, token);
@@ -236,7 +277,7 @@ app.post('/api/crash', (req, res) => {
     res.json({ ok: true, win: false, mult: t, stars: user.stars });
 });
 
-app.post('/api/dice-bot', (req, res) => {
+app.post('/api/dice-bot', gameLimit, (req, res) => {
     const { token, bet, mode } = req.body;
     const db = loadDB();
     const user = findUser(db, token);
@@ -266,7 +307,7 @@ app.post('/api/dice-bot', (req, res) => {
     res.json({ ok: true, d1, d2, sum, win: false, stars: user.stars });
 });
 
-app.post('/api/diceduel-create', (req, res) => {
+app.post('/api/diceduel-create', gameLimit, (req, res) => {
     const { token, bet, opponent } = req.body;
     const db = loadDB();
     const user = findUser(db, token);
@@ -292,7 +333,7 @@ app.post('/api/diceduel-list', (req, res) => {
     const list = Object.entries(db.diceDuels).filter(([id, d]) => d.opponent === user.username).map(([id, d]) => ({ id, ...d }));
     res.json({ ok: true, duels: list });
 });
-app.post('/api/diceduel-accept', (req, res) => {
+app.post('/api/diceduel-accept', gameLimit, (req, res) => {
     const { token, id } = req.body;
     const db = loadDB();
     const user = findUser(db, token);
@@ -324,7 +365,7 @@ app.post('/api/diceduel-accept', (req, res) => {
     res.json({ ok: true, c1, c2, o1, o2, chSum, opSum, result, stars: user.stars });
 });
 
-app.post('/api/mines-start', (req, res) => {
+app.post('/api/mines-start', gameLimit, (req, res) => {
     const { token, bet } = req.body;
     const db = loadDB();
     const user = findUser(db, token);
@@ -339,7 +380,7 @@ app.post('/api/mines-start', (req, res) => {
     saveDB(db);
     res.json({ ok: true });
 });
-app.post('/api/mines-open', (req, res) => {
+app.post('/api/mines-open', gameLimit, (req, res) => {
     const { token, cell } = req.body;
     const db = loadDB();
     const user = findUser(db, token);
@@ -358,7 +399,7 @@ app.post('/api/mines-open', (req, res) => {
     saveDB(db);
     res.json({ ok: true, bomb: false, opened: game.opened.length, multiplier: mult });
 });
-app.post('/api/mines-cash', (req, res) => {
+app.post('/api/mines-cash', gameLimit, (req, res) => {
     const { token } = req.body;
     const db = loadDB();
     const user = findUser(db, token);
@@ -374,7 +415,7 @@ app.post('/api/mines-cash', (req, res) => {
     res.json({ ok: true, win, stars: user.stars });
 });
 
-app.post('/api/plinko', (req, res) => {
+app.post('/api/plinko', gameLimit, (req, res) => {
     const { token, bet, risk } = req.body;
     const db = loadDB();
     const user = findUser(db, token);
@@ -405,7 +446,7 @@ app.post('/api/plinko', (req, res) => {
     res.json({ ok: true, idx, mult: 0, win: 0, stars: user.stars });
 });
 
-app.post('/api/roulette', (req, res) => {
+app.post('/api/roulette', gameLimit, (req, res) => {
     const { token, bet, color } = req.body;
     const db = loadDB();
     const user = findUser(db, token);
@@ -485,7 +526,6 @@ app.post('/api/withdraw', (req, res) => {
     res.json({ ok: true, grams: user.grams, message: 'Заявка на ' + g + ' грамм = ' + tgStars + ' звёзд в Wintegramm. @gift' });
 });
 
-// ЧАТ с антиспамом
 app.post('/api/chat-get', (req, res) => {
     const { token } = req.body;
     const db = loadDB();
@@ -500,13 +540,10 @@ app.post('/api/chat-send', (req, res) => {
     const user = findUser(db, token);
     if (!user) return res.json({ ok: false, error: 'Не авторизован' });
     if (user.banned || user.frozen) return res.json({ ok: false, error: 'Недоступно' });
-
-    // Кулдаун 3 секунды
     const now = Date.now();
     const last = chatCooldown[user.username] || 0;
     if (now - last < 3000) return res.json({ ok: false, error: 'Подождите 3 секунды' });
     chatCooldown[user.username] = now;
-
     const msg = String(text || '').trim().slice(0, 200);
     if (!msg) return res.json({ ok: false, error: 'Пусто' });
     if (!db.chat) db.chat = [];
@@ -516,16 +553,13 @@ app.post('/api/chat-send', (req, res) => {
     res.json({ ok: true });
 });
 
-// АДМИН — с защитой от брутфорса и без логирования пароля
 app.post('/api/admin/login', (req, res) => {
-    const ip = req.ip || 'unknown';
+    const ip = getIP(req);
     const rate = checkLoginRate(ip);
     if (rate.blocked) return res.json({ ok: false, error: 'Слишком много попыток. Подождите ' + rate.wait + ' мин.' });
-
     if (req.body.password !== ADMIN_PASSWORD) {
         recordLoginFail(ip);
         const db = loadDB();
-        // НЕ сохраняем сам пароль — только длину и маску
         const masked = '*'.repeat(Math.min(String(req.body.password || '').length, 20));
         db.failedLogins.push({ ip, password: masked, length: String(req.body.password || '').length, date: Date.now() });
         if (db.failedLogins.length > 50) db.failedLogins = db.failedLogins.slice(-50);
