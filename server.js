@@ -13,14 +13,16 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
 function loadDB() {
-    if (!fs.existsSync(DB_FILE)) return { users: {}, promos: { 'free': 250 }, adminBalance: 0 };
+    if (!fs.existsSync(DB_FILE)) return { users: {}, promos: { 'free': 250 }, adminBalance: 0, withdrawals: [], adminSessions: {} };
     try {
         const db = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
         if (db.adminBalance === undefined) db.adminBalance = 0;
         if (!db.promos) db.promos = { 'free': 250 };
         if (!db.users) db.users = {};
+        if (!db.withdrawals) db.withdrawals = [];
+        if (!db.adminSessions) db.adminSessions = {};
         return db;
-    } catch (e) { return { users: {}, promos: { 'free': 250 }, adminBalance: 0 }; }
+    } catch (e) { return { users: {}, promos: { 'free': 250 }, adminBalance: 0, withdrawals: [], adminSessions: {} }; }
 }
 function saveDB(db) { try { fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2)); } catch (e) {} }
 function genToken() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
@@ -35,7 +37,7 @@ app.post('/api/register', (req, res) => {
     const db = loadDB();
     if (db.users[username]) return res.json({ ok: false, error: 'Ник занят' });
     const token = genToken();
-    db.users[username] = { username, password, token, stars: 100, grams: 0, lastWheel: 0, inventory: [], banned: false, created: Date.now(), usedPromos: [] };
+    db.users[username] = { username, password, token, stars: 100, grams: 0, lastWheel: 0, banned: false, created: Date.now(), usedPromos: [] };
     saveDB(db);
     res.json({ ok: true, token, username });
 });
@@ -83,27 +85,55 @@ app.post('/api/wheel', (req, res) => {
     res.json({ ok: true, prize, stars: user.stars });
 });
 
-const CASES = {
-    poor:    { price: 50,   prizes: [20, 20, 25, 30, 40, 50, 60, 80] },
-    medium:  { price: 100,  prizes: [40, 50, 60, 80, 100, 120, 150, 180] },
-    cute:    { price: 250,  prizes: [100, 120, 150, 200, 250, 300, 400] },
-    admin:   { price: 500,  prizes: [200, 250, 300, 400, 500, 600, 750, 1000, 1000, 1000, 1000, 1000, 1500] },
-    rich:    { price: 1000, prizes: [400, 500, 600, 800, 1000, 1200, 1500] }
-};
-
-app.post('/api/case', (req, res) => {
-    const { token, caseType } = req.body;
+app.post('/api/crash', (req, res) => {
+    const { token, bet, target } = req.body;
     const db = loadDB();
     const user = findUser(db, token);
     if (!user) return res.json({ ok: false, error: 'Не авторизован' });
-    const box = CASES[caseType];
-    if (!box) return res.json({ ok: false, error: 'Нет такого кейса' });
-    if (user.stars < box.price) return res.json({ ok: false, error: 'Мало звёзд' });
-    user.stars -= box.price;
-    const prize = box.prizes[Math.floor(Math.random() * box.prizes.length)];
-    user.stars += prize;
+    const b = parseInt(bet);
+    const t = parseFloat(target);
+    if (b <= 0 || user.stars < b) return res.json({ ok: false, error: 'Мало звёзд' });
+    if (isNaN(t) || t < 1.01 || t > 5) return res.json({ ok: false, error: 'Цель от 1.01 до 5' });
+    const chance = (1 / t) * 100 * 0.95;
+    const win = Math.random() * 100 < chance;
+    if (win) {
+        const profit = Math.floor(b * (t - 1));
+        const commission = Math.floor(profit * 0.05);
+        user.stars += profit - commission;
+        db.adminBalance += commission;
+        saveDB(db);
+        return res.json({ ok: true, win: true, mult: t, profit: profit - commission, stars: user.stars });
+    }
+    user.stars -= b;
     saveDB(db);
-    res.json({ ok: true, prize, stars: user.stars });
+    res.json({ ok: true, win: false, mult: t, stars: user.stars });
+});
+
+app.post('/api/dice', (req, res) => {
+    const { token, bet, mode } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    const b = parseInt(bet);
+    if (b <= 0 || user.stars < b) return res.json({ ok: false, error: 'Мало звёзд' });
+    const d1 = Math.floor(Math.random() * 6) + 1;
+    const d2 = Math.floor(Math.random() * 6) + 1;
+    const sum = d1 + d2;
+    let win = false, mult = 2;
+    if (mode === 'over' && sum > 7) win = true;
+    if (mode === 'under' && sum < 7) win = true;
+    if (mode === 'seven' && sum === 7) { win = true; mult = 5; }
+    if (win) {
+        const profit = b * (mult - 1);
+        const commission = Math.floor(profit * 0.05);
+        user.stars += profit - commission;
+        db.adminBalance += commission;
+        saveDB(db);
+        return res.json({ ok: true, d1, d2, sum, win: true, mult, stars: user.stars });
+    }
+    user.stars -= b;
+    saveDB(db);
+    res.json({ ok: true, d1, d2, sum, win: false, stars: user.stars });
 });
 
 app.post('/api/promo', (req, res) => {
@@ -138,24 +168,45 @@ app.post('/api/exchange', (req, res) => {
     res.json({ ok: true, stars: user.stars, grams: user.grams, exchanged: grams });
 });
 
+// ВЫВОД — заявка сохраняется в общий список для админа
 app.post('/api/withdraw', (req, res) => {
-    const { token, amount } = req.body;
+    const { token, grams } = req.body;
     const db = loadDB();
     const user = findUser(db, token);
     if (!user) return res.json({ ok: false, error: 'Не авторизован' });
-    const amt = parseInt(amount);
-    if (isNaN(amt) || amt < 1000) return res.json({ ok: false, error: 'Минимум 1000' });
-    if (user.stars < amt) return res.json({ ok: false, error: 'Недостаточно' });
-    user.stars -= amt;
-    if (!user.withdrawals) user.withdrawals = [];
-    user.withdrawals.push({ amount: amt, date: Date.now(), status: 'pending' });
+    if (user.grams === undefined) user.grams = 0;
+    const g = parseInt(grams);
+    if (isNaN(g) || g < 1) return res.json({ ok: false, error: 'Минимум 1 грамм' });
+    if (user.grams < g) return res.json({ ok: false, error: 'Недостаточно граммов' });
+    user.grams -= g;
+    const tgStars = g * 10;
+    const wr = { username: user.username, grams: g, tgStars, date: Date.now(), status: 'pending' };
+    db.withdrawals.push(wr);
     saveDB(db);
-    res.json({ ok: true, stars: user.stars, message: 'Заявка создана. @gift' });
+    res.json({ ok: true, grams: user.grams, message: 'Заявка на ' + g + ' грамм (' + tgStars + ' звёзд). Напишите @gift' });
 });
 
+// АДМИН
 app.post('/api/admin/login', (req, res) => {
     if (req.body.password !== ADMIN_PASSWORD) return res.json({ ok: false, error: 'Неверный пароль' });
-    res.json({ ok: true });
+    // Регистрируем сессию админа
+    const db = loadDB();
+    const ip = req.ip || 'unknown';
+    const adminId = 'admin_' + genToken();
+    db.adminSessions[adminId] = { ip, loginAt: Date.now() };
+    saveDB(db);
+    res.json({ ok: true, adminId });
+});
+
+// Список активных админов (кто в течение 5 минут заходил)
+app.post('/api/admin/online', (req, res) => {
+    if (req.body.password !== ADMIN_PASSWORD) return res.json({ ok: false, error: 'Нет доступа' });
+    const db = loadDB();
+    const now = Date.now();
+    const online = Object.entries(db.adminSessions || {})
+        .filter(([id, s]) => now - s.loginAt < 5 * 60 * 1000)
+        .map(([id, s]) => ({ id, ip: s.ip, loginAt: s.loginAt }));
+    res.json({ ok: true, online });
 });
 
 app.post('/api/admin/stats', (req, res) => {
@@ -168,7 +219,14 @@ app.post('/api/admin/stats', (req, res) => {
 app.post('/api/admin/users', (req, res) => {
     if (req.body.password !== ADMIN_PASSWORD) return res.json({ ok: false, error: 'Нет доступа' });
     const db = loadDB();
-    res.json({ ok: true, users: Object.values(db.users).map(u => ({ username: u.username, stars: u.stars, banned: u.banned })) });
+    res.json({ ok: true, users: Object.values(db.users).map(u => ({ username: u.username, stars: u.stars, grams: u.grams || 0, banned: u.banned })) });
+});
+
+// Список всех заявок на вывод
+app.post('/api/admin/withdrawals', (req, res) => {
+    if (req.body.password !== ADMIN_PASSWORD) return res.json({ ok: false, error: 'Нет доступа' });
+    const db = loadDB();
+    res.json({ ok: true, withdrawals: db.withdrawals || [] });
 });
 
 app.post('/api/admin/give', (req, res) => {
