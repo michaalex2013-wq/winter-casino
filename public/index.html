@@ -1,3 +1,228 @@
+body.light { background: #f0f2f7; color: #111; }
+body.light .auth-box,
+body.light .glass,
+body.light .section,
+body.light .balance-card,
+body.light .quick-card,
+body.light .game-card,
+body.light .user-row,
+body.light .ach-card,
+body.light .bonus-card,
+body.light .admin-block,
+body.light .admin-item,
+body.light .tx-item,
+body.light .chat-msg,
+body.light .menu-panel,
+body.light .duel-card { background: #ffffff !important; color: #111 !important; border-color: #d8dbe2 !important; }
+body.light .topbar,
+body.light .main-top { background: #ffffff; color: #111; border-color: #d8dbe2; }
+body.light .section-title,
+body.light .game-card .gc-name,
+body.light .quick-card .qc-name,
+body.light .prof-name,
+body.light .u-name,
+body.light .tx-item .tx-amount { color: #111 !important; }
+body.light .status,
+body.light .stake-desc,
+body.light .admin-item .lbl { color: #555 !important; }
+body.light .btn-glass { background: #e5e8ef; color: #333; border-color: #d0d4dd; }
+body.light .admin-input { background: #f0f2f7; color: #111; border-color: #d0d4dd; }
+body.light .big-balance .val { color: #6366f1; text-shadow: none; }
+<div class="auth-bg" id="authPage">
+<div id="maintenanceScreen" class="block-screen hidden" style="background:#1a0a00;">
+    <div class="bi">🚧</div>
+    <div class="bt" style="color:#ff9900;">ТЕХ-РАБОТЫ</div>
+    <div class="btext" id="maintenanceText">Скоро вернёмся. Заходите позже.</div>
+    <button style="background:#ff9900;" onclick="location.reload()">Обновить</button>
+</div>
+
+<div id="broadcastBanner" class="hidden" style="position:fixed;top:60px;left:12px;right:12px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;padding:14px 18px;border-radius:16px;z-index:9998;box-shadow:0 8px 30px rgba(99,102,241,0.5);font-size:13px;line-height:1.4;">
+    <div style="font-weight:900;margin-bottom:4px;">📢 Объявление</div>
+    <div id="broadcastText"></div>
+    <button onclick="document.getElementById('broadcastBanner').classList.add('hidden')" style="position:absolute;top:8px;right:8px;background:rgba(255,255,255,0.2);color:#fff;border:none;width:26px;height:26px;border-radius:50%;font-size:14px;cursor:pointer;padding:0;margin:0;">✕</button>
+</div>
+<div class="section-title" style="font-size:14px;">🟢 Статус</div>
+<div class="section-title" style="font-size:14px;margin-top:14px;">🌗 Тема</div>
+<button class="btn-glass" onclick="setTheme('dark')">🌙 Тёмная</button>
+<button class="btn-glass" onclick="setTheme('light')">☀️ Светлая</button>
+<div class="admin-block"><div class="admin-block-title">👥 Пользователи</div>
+<div class="admin-block">
+    <div class="admin-block-title">🚧 Тех-работы</div>
+    <div id="maintenanceStatus" style="font-size:12px;color:#666;margin-bottom:8px;">Загрузка...</div>
+    <input type="text" id="maintenanceMsg" class="admin-input" placeholder="Текст сообщения" value="Тех-работы. Скоро вернёмся.">
+    <button class="admin-btn-green" onclick="toggleMaintenance(true)">ВКЛЮЧИТЬ</button>
+    <button class="admin-btn-red" onclick="toggleMaintenance(false)">ВЫКЛЮЧИТЬ</button>
+</div>
+
+<div class="admin-block">
+    <div class="admin-block-title">📢 Масс-рассылка</div>
+    <input type="text" id="broadcastText" class="admin-input" placeholder="Текст объявления (до 500 символов)">
+    <button class="admin-btn-green" onclick="sendBroadcast()">ОТПРАВИТЬ ВСЕМ</button>
+    <div class="status" id="broadcastStatus"></div>
+</div>
+
+<div class="admin-block">
+    <div class="admin-block-title">🛡️ Античит</div>
+    <div id="anticheatList"></div>
+    <button class="admin-btn-green" onclick="loadAnticheat()">🔄 ОБНОВИТЬ</button>
+</div>
+
+<div class="admin-block">
+    <div class="admin-block-title">🔍 Инфо об игроке</div>
+    <input type="text" id="userInfoInput" class="admin-input" placeholder="@ Ник">
+    <button class="admin-btn-green" onclick="loadUserInfo()">ПОКАЗАТЬ</button>
+    <div id="userInfoBox" style="margin-top:10px;"></div>
+</div>
+
+<div class="admin-block">
+    <div class="admin-block-title">📤 Экспорт базы</div>
+    <div style="font-size:12px;color:#666;margin-bottom:8px;">Скачать все данные (без паролей)</div>
+    <button class="admin-btn-green" onclick="exportDB()">ЭКСПОРТ JSON</button>
+</div>
+    loadPromos();
+    checkMaintenanceStatus();
+    loadAnticheat();
+}
+// ТЕМА
+async function setTheme(t) {
+    await api('/api/set-theme', { token, theme: t });
+    if (t === 'light') document.body.classList.add('light');
+    else document.body.classList.remove('light');
+}
+function applyTheme() {
+    const t = localStorage.getItem('theme') || 'dark';
+    if (t === 'light') document.body.classList.add('light');
+}
+
+// ТЕХ-РАБОТЫ (проверка при загрузке)
+async function checkMaintenanceOnLoad() {
+    try {
+        const r = await fetch('/api/check-maintenance', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
+        const d = await r.json();
+        if (d.maintenance && d.maintenance.enabled) {
+            hideAll();
+            document.getElementById('maintenanceScreen').classList.remove('hidden');
+            document.getElementById('maintenanceText').innerText = d.maintenance.message || 'Тех-работы';
+            return true;
+        }
+    } catch (e) {}
+    return false;
+}
+
+async function checkMaintenanceStatus() {
+    const el = document.getElementById('maintenanceStatus');
+    if (!el) return;
+    try {
+        const r = await fetch('/api/check-maintenance', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
+        const d = await r.json();
+        if (d.maintenance && d.maintenance.enabled) {
+            el.innerHTML = '<span style="color:#ef4444;">🔴 ВКЛЮЧЕНЫ</span>';
+        } else {
+            el.innerHTML = '<span style="color:#22c55e;">🟢 Выключены</span>';
+        }
+    } catch (e) { el.innerText = '—'; }
+}
+
+async function toggleMaintenance(on) {
+    const msg = document.getElementById('maintenanceMsg').value;
+    const r = await api('/api/admin/maintenance-toggle', { password: adminPass, enabled: on, message: msg });
+    if (!r.ok) return alert(r.error);
+    checkMaintenanceStatus();
+}
+
+// РАССЫЛКА
+async function sendBroadcast() {
+    const text = document.getElementById('broadcastText').value.trim();
+    if (!text) return st('broadcastStatus', '❌ Пусто', '#ef4444');
+    const r = await api('/api/admin/broadcast', { password: adminPass, text });
+    if (!r.ok) return st('broadcastStatus', '❌ ' + r.error, '#ef4444');
+    st('broadcastStatus', '✅ Отправлено всем (' + r.count + ')', '#22c55e');
+    document.getElementById('broadcastText').value = '';
+}
+
+async function loadBroadcast() {
+    if (!token) return;
+    const r = await api('/api/broadcast-get', { token });
+    if (!r.ok || !r.broadcast) return;
+    document.getElementById('broadcastText').innerText = r.broadcast.text;
+    document.getElementById('broadcastBanner').classList.remove('hidden');
+    setTimeout(() => document.getElementById('broadcastBanner').classList.add('hidden'), 15000);
+}
+
+// АНТИЧИТ
+async function loadAnticheat() {
+    const r = await api('/api/admin/anticheat', { password: adminPass });
+    if (!r.ok) return;
+    const box = document.getElementById('anticheatList');
+    if (r.flags.length === 0) { box.innerHTML = '<div class="admin-item" style="color:#666;">Чисто</div>'; return; }
+    const typeNames = { many_bets: '🎲 Много ставок', huge_balance: '💰 Огромный баланс' };
+    box.innerHTML = r.flags.slice(0, 20).map(f =>
+        '<div class="fail-item"><b>' + (typeNames[f.type] || f.type) + '</b> — ' + f.user + '<br>' + f.detail + '<br><small>' + new Date(f.date).toLocaleString() + '</small><br><button class="admin-btn-mini" style="background:#3b82f6;margin-top:4px;" onclick="clearAnticheat(\'' + f.user + '\')">Сбросить</button></div>'
+    ).join('');
+}
+async function clearAnticheat(u) {
+    await api('/api/admin/anticheat-clear', { password: adminPass, username: u });
+    loadAnticheat();
+}
+
+// ИНФО ИГРОКА
+async function loadUserInfo() {
+    const u = document.getElementById('userInfoInput').value.trim();
+    if (!u) return;
+    const r = await api('/api/admin/user-info', { password: adminPass, username: u });
+    if (!r.ok) return document.getElementById('userInfoBox').innerHTML = '<div class="fail-item">❌ ' + r.error + '</div>';
+    const usr = r.user;
+    document.getElementById('userInfoBox').innerHTML =
+        '<div class="admin-item">' +
+        '<div class="row"><span class="lbl">Ник</span><span class="val">' + usr.username + '</span></div>' +
+        '<div class="row"><span class="lbl">⭐ Звёзды</span><span class="val">' + usr.stars + '</span></div>' +
+        '<div class="row"><span class="lbl">💎 Граммы</span><span class="val">' + usr.grams + '</span></div>' +
+        '<div class="row"><span class="lbl">🎁 Всего выиграл</span><span class="val">' + usr.stats.totalWin + '</span></div>' +
+        '<div class="row"><span class="lbl">🎮 Игр</span><span class="val">' + usr.stats.gamesPlayed + '</span></div>' +
+        '<div class="row"><span class="lbl">📈 Макс множитель</span><span class="val">x' + (usr.stats.maxMult || 0).toFixed(2) + '</span></div>' +
+        '<div class="row"><span class="lbl">🏆 Достижений</span><span class="val">' + usr.achievements + '</span></div>' +
+        '<div class="row"><span class="lbl">👥 Друзей</span><span class="val">' + usr.friends + '</span></div>' +
+        '<div class="row"><span class="lbl">🏰 Клан</span><span class="val">' + (usr.clan || '—') + '</span></div>' +
+        '<div class="row"><span class="lbl">💍 Брак</span><span class="val">' + (usr.marriedTo || '—') + '</span></div>' +
+        '<div class="row"><span class="lbl">⭐ Premium</span><span class="val">' + (usr.premium ? 'Да' : 'Нет') + '</span></div>' +
+        '<div class="row"><span class="lbl">🚫 Бан</span><span class="val">' + (usr.banned ? 'Да' : 'Нет') + '</span></div>' +
+        '<div class="row"><span class="lbl">❄️ Заморозка</span><span class="val">' + (usr.frozen ? 'Да' : 'Нет') + '</span></div>' +
+        '<div class="row"><span class="lbl">📅 Регистрация</span><span class="val">' + new Date(usr.created).toLocaleDateString() + '</span></div>' +
+        '</div>' +
+        '<div class="section-title" style="font-size:12px;color:#666;margin-top:10px;">Последние транзакции</div>' +
+        r.transactions.map(t => '<div class="tx-item"><div><div class="tx-type">' + t.type + '</div><div style="font-size:10px;color:#555;">' + new Date(t.date).toLocaleString() + '</div></div><div class="tx-amount ' + (t.amount > 0 ? 'plus' : 'minus') + '">' + (t.amount > 0 ? '+' : '') + t.amount + ' ⭐</div></div>').join('');
+}
+
+// ЭКСПОРТ
+async function exportDB() {
+    const r = await api('/api/admin/export', { password: adminPass });
+    if (!r.ok) return alert(r.error);
+    const blob = new Blob([JSON.stringify(r.data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'wtg-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+// ПРИМЕНИТЬ ТЕМУ И ПРОВЕРИТЬ ТЕХ-РАБОТЫ ПРИ СТАРТЕ
+applyTheme();
+setTimeout(() => { loadBroadcast(); }, 3000);
+async function setTheme(t) {
+    await api('/api/set-theme', { token, theme: t });
+    localStorage.setItem('theme', t);
+    if (t === 'light') document.body.classList.add('light');
+    else document.body.classList.remove('light');
+}
+(async () => {
+    const onMaintenance = await checkMaintenanceOnLoad();
+    if (onMaintenance) return;
+    if (token) {
+        showPage('mainPage');
+        setTimeout(loadBroadcast, 2000);
+    }
+})();
 <div class="quick-grid">
     <div class="quick-card highlight" id="dailyCard" onclick="openPanel('daily')">...
 <div class="section" style="margin-top:20px;">
