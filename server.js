@@ -900,6 +900,210 @@ app.post('/api/admin/action-logs', (req, res) => {
 });
 
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+// ========== БАКАРА ==========
+function baccaratValue(cards) {
+    let sum = 0;
+    for (const c of cards) {
+        if (['10', 'J', 'Q', 'K'].includes(c.v)) continue;
+        if (c.v === 'A') sum += 1;
+        else sum += parseInt(c.v);
+    }
+    return sum % 10;
+}
+
+app.post('/api/baccarat-start', gameLimit, (req, res) => {
+    const { token, bet, side } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    if (user.banned || user.frozen) return res.json({ ok: false, error: 'Недоступно' });
+    const b = parseInt(bet);
+    if (b <= 0 || user.stars < b) return res.json({ ok: false, error: 'Мало звёзд' });
+    if (!['player', 'banker', 'tie'].includes(side)) return res.json({ ok: false, error: 'Неверная ставка' });
+
+    user.stars -= b;
+    const deck = createDeck();
+    const player = [deck.pop(), deck.pop()];
+    const banker = [deck.pop(), deck.pop()];
+    let pv = baccaratValue(player);
+    let bv = baccaratValue(banker);
+
+    if (pv < 8 && bv < 8) {
+        if (pv <= 5) player.push(deck.pop());
+        pv = baccaratValue(player);
+        if (bv <= 5) {
+            const thirdCard = player.length === 3 ? parseInt(player[2].v) || 10 : null;
+            let shouldDraw = false;
+            if (bv <= 2) shouldDraw = true;
+            else if (bv === 3 && thirdCard !== 8) shouldDraw = true;
+            else if (bv === 4 && thirdCard >= 2 && thirdCard <= 7) shouldDraw = true;
+            else if (bv === 5 && thirdCard >= 4 && thirdCard <= 7) shouldDraw = true;
+            else if (bv === 6 && thirdCard >= 6 && thirdCard <= 7) shouldDraw = true;
+            if (shouldDraw) banker.push(deck.pop());
+            bv = baccaratValue(banker);
+        }
+    }
+
+    let winner;
+    if (pv > bv) winner = 'player';
+    else if (bv > pv) winner = 'banker';
+    else winner = 'tie';
+
+    let result = 'lose';
+    let win = 0;
+    if (winner === side) {
+        result = 'win';
+        if (side === 'player') win = b * 2;
+        else if (side === 'banker') win = Math.floor(b * 1.95);
+        else win = b * 9;
+        user.stars += win;
+        const profit = win - b;
+        if (profit > 0) {
+            const commission = Math.floor(profit * 0.05);
+            user.stars -= commission;
+            db.adminBalance += commission;
+        }
+    }
+    saveDB(db);
+    res.json({ ok: true, player, banker, pv, bv, winner, result, win, stars: user.stars });
+});
+
+// ========== ТИР ==========
+app.post('/api/shooter-start', gameLimit, (req, res) => {
+    const { token, bet } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    if (user.banned || user.frozen) return res.json({ ok: false, error: 'Недоступно' });
+    const b = parseInt(bet);
+    if (b <= 0 || user.stars < b) return res.json({ ok: false, error: 'Мало звёзд' });
+
+    user.stars -= b;
+    // Мишени: 5 штук, у каждой множитель. Сложнее попасть = больше награда.
+    const targets = [];
+    for (let i = 0; i < 5; i++) {
+        const size = Math.random(); // 0 = большая (легко), 1 = маленькая (сложно)
+        let mult, hitChance;
+        if (size < 0.4) { mult = 1.2; hitChance = 0.8; }
+        else if (size < 0.7) { mult = 2; hitChance = 0.55; }
+        else if (size < 0.9) { mult = 5; hitChance = 0.3; }
+        else { mult = 15; hitChance = 0.1; }
+        const hit = Math.random() < hitChance;
+        targets.push({ mult, hit });
+    }
+    const totalMult = targets.filter(t => t.hit).reduce((s, t) => s + t.mult, 0);
+    const win = Math.floor(b * totalMult);
+    if (win > 0) {
+        user.stars += win;
+        const profit = win - b;
+        if (profit > 0) {
+            const commission = Math.floor(profit * 0.05);
+            user.stars -= commission;
+            db.adminBalance += commission;
+        }
+    }
+    saveDB(db);
+    res.json({ ok: true, targets, totalMult, win, stars: user.stars });
+});
+
+// ========== КОСТИ (CRAPS) ==========
+app.post('/api/craps-roll', gameLimit, (req, res) => {
+    const { token, bet, betType } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    if (user.banned || user.frozen) return res.json({ ok: false, error: 'Недоступно' });
+    const b = parseInt(bet);
+    if (b <= 0 || user.stars < b) return res.json({ ok: false, error: 'Мало звёзд' });
+    const allowed = ['pass', 'dontpass', 'seven', 'craps'];
+    if (!allowed.includes(betType)) return res.json({ ok: false, error: 'Неверный тип' });
+
+    user.stars -= b;
+    const d1 = Math.floor(Math.random() * 6) + 1;
+    const d2 = Math.floor(Math.random() * 6) + 1;
+    const sum = d1 + d2;
+
+    let win = false, mult = 2;
+    if (betType === 'pass' && [7, 11].includes(sum)) win = true;
+    else if (betType === 'pass' && [2, 3, 12].includes(sum)) win = false;
+    else if (betType === 'dontpass' && [2, 3].includes(sum)) win = true;
+    else if (betType === 'dontpass' && [7, 11].includes(sum)) win = false;
+    else if (betType === 'dontpass' && sum === 12) { win = false; mult = 1; } // push
+    else if (betType === 'seven' && sum === 7) { win = true; mult = 5; }
+    else if (betType === 'craps' && [2, 3, 12].includes(sum)) { win = true; mult = 8; }
+    else if (betType === 'pass') {
+        // Point established — упростим: если 4-6, 8-10 — win 50/50
+        win = Math.random() < 0.49;
+    }
+
+    let prize = 0;
+    if (win) {
+        prize = b * mult;
+        user.stars += prize;
+        const profit = prize - b;
+        if (profit > 0) {
+            const commission = Math.floor(profit * 0.05);
+            user.stars -= commission;
+            db.adminBalance += commission;
+        }
+    } else if (mult === 1 && prize === 0) {
+        user.stars += b; // push
+    }
+    saveDB(db);
+    res.json({ ok: true, d1, d2, sum, win, mult, prize, stars: user.stars });
+});
+
+// ========== РУЛЕТКА С ЧИСЛАМИ И ДЮЖИНАМИ ==========
+const ROULETTE_RED = [1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36];
+const ROULETTE_BLACK = [2,4,6,8,10,11,13,15,17,20,22,24,26,28,29,31,33,35];
+
+app.post('/api/roulette-adv', gameLimit, (req, res) => {
+    const { token, bet, betType, betValue } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    if (user.banned || user.frozen) return res.json({ ok: false, error: 'Недоступно' });
+    const b = parseInt(bet);
+    if (b <= 0 || user.stars < b) return res.json({ ok: false, error: 'Мало звёзд' });
+
+    user.stars -= b;
+    const result = Math.floor(Math.random() * 37); // 0-36
+    let isRed = ROULETTE_RED.includes(result);
+    let isBlack = ROULETTE_BLACK.includes(result);
+    let color = result === 0 ? 'green' : isRed ? 'red' : 'black';
+    let win = false, mult = 0;
+
+    if (betType === 'color') {
+        if (betValue === color) { win = true; mult = color === 'green' ? 14 : 2; }
+    } else if (betType === 'number') {
+        if (parseInt(betValue) === result) { win = true; mult = 36; }
+    } else if (betType === 'dozen') {
+        const d = parseInt(betValue); // 1, 2, 3
+        if (d === 1 && result >= 1 && result <= 12) { win = true; mult = 3; }
+        if (d === 2 && result >= 13 && result <= 24) { win = true; mult = 3; }
+        if (d === 3 && result >= 25 && result <= 36) { win = true; mult = 3; }
+    } else if (betType === 'parity') {
+        if (result !== 0 && betValue === 'even' && result % 2 === 0) { win = true; mult = 2; }
+        if (result !== 0 && betValue === 'odd' && result % 2 !== 0) { win = true; mult = 2; }
+    } else if (betType === 'half') {
+        if (betValue === 'low' && result >= 1 && result <= 18) { win = true; mult = 2; }
+        if (betValue === 'high' && result >= 19 && result <= 36) { win = true; mult = 2; }
+    }
+
+    let prize = 0;
+    if (win) {
+        prize = b * mult;
+        user.stars += prize;
+        const profit = prize - b;
+        if (profit > 0) {
+            const commission = Math.floor(profit * 0.05);
+            user.stars -= commission;
+            db.adminBalance += commission;
+        }
+    }
+    saveDB(db);
+    res.json({ ok: true, result, color, win, mult, prize, stars: user.stars });
+});
 app.listen(PORT, '0.0.0.0', () => console.log('OK: ' + PORT));// ========== СОЦИАЛЬНОЕ ==========
 
 // ДРУЗЬЯ
