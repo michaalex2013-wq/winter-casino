@@ -1,3 +1,187 @@
+// ========== ТЕХ-РАБОТЫ ==========
+// Если maintenance = true, все игровые и бонусные запросы блокируются
+const MAINTENANCE_KEY = 'MAINTENANCE_ON_2026';
+
+app.use('/api', (req, res, next) => {
+    // Не блокируем admin-запросы
+    if (req.path.startsWith('/admin/')) return next();
+    // Не блокируем логин/регистрацию
+    if (req.path === '/login' || req.path === '/register') return next();
+
+    const db = loadDB();
+    if (db.maintenance && db.maintenance.enabled) {
+        return res.json({ ok: false, error: 'MAINTENANCE', maintenance: true, message: db.maintenance.message || 'Тех-работы. Заходите позже.' });
+    }
+    next();
+});
+
+app.post('/api/admin/maintenance-toggle', (req, res) => {
+    const { password, enabled, message } = req.body;
+    if (password !== ADMIN_PASSWORD) return res.json({ ok: false, error: 'Нет доступа' });
+    const db = loadDB();
+    db.maintenance = { enabled: !!enabled, message: String(message || 'Тех-работы').slice(0, 200) };
+    logAction(db, 'maintenance', 'admin', enabled ? 'ON' : 'OFF');
+    saveDB(db);
+    res.json({ ok: true });
+});
+
+app.post('/api/check-maintenance', (req, res) => {
+    const db = loadDB();
+    res.json({ ok: true, maintenance: db.maintenance || { enabled: false } });
+});
+
+// ========== ЭКСПОРТ БАЗЫ ==========
+app.post('/api/admin/export', (req, res) => {
+    const { password } = req.body;
+    if (password !== ADMIN_PASSWORD) return res.json({ ok: false, error: 'Нет доступа' });
+    const db = loadDB();
+    // Не отдаём пароли и токены
+    const safe = JSON.parse(JSON.stringify(db));
+    Object.keys(safe.users || {}).forEach(u => {
+        delete safe.users[u].password;
+        delete safe.users[u].token;
+    });
+    res.json({ ok: true, data: safe });
+});
+
+// ========== ПРОСМОТР ИГРОКА В АДМИНКЕ ==========
+app.post('/api/admin/user-info', (req, res) => {
+    const { password, username } = req.body;
+    if (password !== ADMIN_PASSWORD) return res.json({ ok: false, error: 'Нет доступа' });
+    const db = loadDB();
+    const u = db.users[username];
+    if (!u) return res.json({ ok: false, error: 'Не найден' });
+    const s = db.stats?.[username] || { totalWin: 0, totalBet: 0, maxMult: 0, gamesPlayed: 0 };
+    const txs = (db.transactions || []).filter(t => t.user === username).slice(-20).reverse();
+    res.json({
+        ok: true,
+        user: {
+            username: u.username,
+            stars: u.stars,
+            grams: u.grams || 0,
+            prefix: u.prefix || '',
+            banned: u.banned,
+            frozen: u.frozen || false,
+            premium: u.premium && u.premiumUntil > Date.now(),
+            friends: (u.friends || []).length,
+            clan: u.clan || null,
+            marriedTo: u.marriedTo || null,
+            achievements: (u.achievements || []).length,
+            bets: u.bets || 0,
+            created: u.created,
+            stats: s
+        },
+        transactions: txs
+    });
+});
+
+// ========== АНТИЧИТ ==========
+// При каждой ставке записываем в очередь проверки.
+// Если за последние 60 секунд у игрока более 40 ставок или сумма выигрыша > 1 000 000 за час — флаг.
+function antiCheatCheck(db, user) {
+    const now = Date.now();
+    if (!db.anticheat) db.anticheat = {};
+    if (!db.anticheat[user.username]) db.anticheat[user.username] = { recentBets: [], flags: [] };
+
+    const ac = db.anticheat[user.username];
+    ac.recentBets.push(now);
+    // Держим только последние 5 минут
+    ac.recentBets = ac.recentBets.filter(t => now - t < 5 * 60 * 1000);
+
+    // Много ставок
+    if (ac.recentBets.length > 40) {
+        if (!ac.flags.find(f => f.type === 'many_bets' && now - f.date < 10 * 60 * 1000)) {
+            ac.flags.push({ type: 'many_bets', date: now, detail: ac.recentBets.length + ' ставок за 5 мин' });
+        }
+    }
+
+    // Слишком много звёзд (общий баланс > 10 000 000)
+    if (user.stars > 10000000) {
+        if (!ac.flags.find(f => f.type === 'huge_balance' && now - f.date < 10 * 60 * 1000)) {
+            ac.flags.push({ type: 'huge_balance', date: now, detail: 'Баланс ' + user.stars });
+        }
+    }
+
+    if (ac.flags.length > 50) ac.flags = ac.flags.slice(-50);
+}
+
+app.post('/api/admin/anticheat', (req, res) => {
+    const { password } = req.body;
+    if (password !== ADMIN_PASSWORD) return res.json({ ok: false, error: 'Нет доступа' });
+    const db = loadDB();
+    if (!db.anticheat) db.anticheat = {};
+    const all = [];
+    Object.keys(db.anticheat).forEach(user => {
+        db.anticheat[user].flags.forEach(f => all.push({ user, ...f }));
+    });
+    all.sort((a, b) => b.date - a.date);
+    res.json({ ok: true, flags: all.slice(0, 50) });
+});
+
+app.post('/api/admin/anticheat-clear', (req, res) => {
+    const { password, username } = req.body;
+    if (password !== ADMIN_PASSWORD) return res.json({ ok: false, error: 'Нет доступа' });
+    const db = loadDB();
+    if (db.anticheat && db.anticheat[username]) {
+        db.anticheat[username].flags = [];
+        db.anticheat[username].recentBets = [];
+    }
+    saveDB(db);
+    res.json({ ok: true });
+});
+
+// ========== МАСС-РАССЫЛКА ==========
+app.post('/api/admin/broadcast', (req, res) => {
+    const { password, text } = req.body;
+    if (password !== ADMIN_PASSWORD) return res.json({ ok: false, error: 'Нет доступа' });
+    const msg = String(text || '').trim().slice(0, 500);
+    if (!msg) return res.json({ ok: false, error: 'Пусто' });
+    const db = loadDB();
+    if (!db.broadcast) db.broadcast = [];
+    db.broadcast.push({ text: msg, date: Date.now() });
+    if (db.broadcast.length > 20) db.broadcast = db.broadcast.slice(-20);
+    saveDB(db);
+    res.json({ ok: true, count: Object.keys(db.users).length });
+});
+
+app.post('/api/broadcast-get', (req, res) => {
+    const { token } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    if (!db.broadcast) return res.json({ ok: true, broadcast: null });
+    const last = db.broadcast[db.broadcast.length - 1];
+    if (!last) return res.json({ ok: true, broadcast: null });
+    // Показываем только если игрок её не видел
+    if (!user.seenBroadcasts) user.seenBroadcasts = [];
+    if (user.seenBroadcasts.includes(last.date)) return res.json({ ok: true, broadcast: null });
+    user.seenBroadcasts.push(last.date);
+    if (user.seenBroadcasts.length > 20) user.seenBroadcasts = user.seenBroadcasts.slice(-20);
+    saveDB(db);
+    res.json({ ok: true, broadcast: last });
+});
+
+// ========== ТЁМНАЯ / СВЕТЛАЯ ТЕМА ==========
+app.post('/api/set-theme', (req, res) => {
+    const { token, theme } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    if (!['dark', 'light'].includes(theme)) return res.json({ ok: false, error: 'Неверная тема' });
+    user.theme = theme;
+    saveDB(db);
+    res.json({ ok: true });
+});
+
+// ========== ИСТОРИЯ ВСЕХ ТРАНЗАКЦИЙ (админ) ==========
+app.post('/api/admin/all-transactions', (req, res) => {
+    const { password, username } = req.body;
+    if (password !== ADMIN_PASSWORD) return res.json({ ok: false, error: 'Нет доступа' });
+    const db = loadDB();
+    let list = db.transactions || [];
+    if (username) list = list.filter(t => t.user === username);
+    res.json({ ok: true, transactions: list.slice(-200).reverse() });
+});
 // ========== ТУРНИРЫ И РЕЙТИНГИ ==========
 
 function startOfDay() {
