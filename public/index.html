@@ -27,7 +27,7 @@ body { background: #0a0a0f; color: #fff; min-height: 100vh; padding-bottom: 30px
 .auth-sub { font-size: 12px; color: #666; margin-bottom: 24px; }
 input { width: 100%; padding: 14px 16px; margin: 5px 0; background: #0a0a0f; border: 1px solid #1f1f28; border-radius: 10px; color: #fff; font-size: 14px; }
 input:focus { outline: none; border-color: #6366f1; }
-button { width: 100%; padding: 14px; margin: 5px 0; border: none; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; }
+button { width: 100%; padding: 14px; margin: 5px 0; border: none; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; transition: transform 0.15s; }
 button:active { transform: scale(0.98); }
 .btn-primary { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; }
 .btn-glass { background: #1a1a24; color: #ccc; border: 1px solid #252530; }
@@ -37,7 +37,7 @@ button:disabled { opacity: 0.4; }
 .auth-switch { font-size: 13px; color: #666; margin-top: 14px; }
 .auth-switch a { color: #6366f1; cursor: pointer; }
 
-/* ГЛАВНОЕ МЕНЮ */
+/* ГЛАВНОЕ */
 .main-top { padding: 20px 18px; display: flex; align-items: center; gap: 12px; }
 .burger { width: 40px; height: 40px; border-radius: 12px; background: #111116; border: 1px solid #1a1a1f; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 4px; cursor: pointer; }
 .burger span { width: 20px; height: 2px; background: #fff; border-radius: 2px; }
@@ -48,38 +48,30 @@ button:disabled { opacity: 0.4; }
 .big-balance .val .coin { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #6366f1, #8b5cf6); display: flex; align-items: center; justify-content: center; font-size: 22px; }
 
 .big-games-btn {
-    margin: 0 18px 20px;
-    padding: 28px;
-    border-radius: 24px;
-    background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899);
-    text-align: center;
-    cursor: pointer;
+    margin: 0 18px 20px; padding: 28px; border-radius: 24px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6 40%, #ec4899 100%);
+    text-align: center; cursor: pointer; position: relative; overflow: hidden;
     box-shadow: 0 20px 60px rgba(139,92,246,0.5);
-    position: relative;
-    overflow: hidden;
 }
 .big-games-btn::before {
-    content: '';
-    position: absolute;
-    top: -50%; left: -50%;
-    width: 200%; height: 200%;
-    background: linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.15) 50%, transparent 60%);
+    content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+    background: linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.2) 50%, transparent 60%);
     animation: shine 3s infinite;
 }
 @keyframes shine { from { transform: translateX(-100%) rotate(45deg); } to { transform: translateX(100%) rotate(45deg); } }
-.big-games-btn .big-title { font-size: 32px; font-weight: 900; letter-spacing: 3px; color: #fff; position: relative; z-index: 1; }
-.big-games-btn .big-sub { font-size: 13px; color: rgba(255,255,255,0.8); margin-top: 6px; position: relative; z-index: 1; }
+.big-games-btn .big-title { font-size: 32px; font-weight: 900; letter-spacing: 3px; position: relative; z-index: 1; }
+.big-games-btn .big-sub { font-size: 13px; color: rgba(255,255,255,0.85); margin-top: 6px; position: relative; z-index: 1; }
 
 .quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 18px; margin-bottom: 20px; }
-.quick-card { background: #111116; border: 1px solid #1a1a1f; border-radius: 16px; padding: 16px; text-align: center; cursor: pointer; }
+.quick-card { background: #111116; border: 1px solid #1a1a1f; border-radius: 16px; padding: 16px; text-align: center; cursor: pointer; transition: all 0.15s; }
 .quick-card .qc-icon { font-size: 28px; margin-bottom: 6px; }
 .quick-card .qc-name { font-size: 12px; color: #ccc; font-weight: 700; }
-.quick-card:active { background: #1a1a24; }
+.quick-card:active { background: #1a1a24; transform: scale(0.96); }
 
-/* МЕНЮ ПОЛОСКИ */
-.menu-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 999; display: flex; align-items: flex-start; justify-content: flex-start; padding: 80px 18px 18px; }
-.menu-panel { background: #111116; border: 1px solid #1a1a1f; border-radius: 20px; padding: 16px; width: 260px; }
-.menu-item { padding: 14px 16px; border-radius: 12px; display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 14px; font-weight: 700; color: #ccc; margin-bottom: 4px; }
+/* МЕНЮ */
+.menu-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 999; display: flex; align-items: flex-start; justify-content: flex-start; padding: 80px 18px 18px; }
+.menu-panel { background: #111116; border: 1px solid #1a1a1f; border-radius: 20px; padding: 14px; width: 280px; }
+.menu-item { padding: 14px 16px; border-radius: 12px; display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 14px; font-weight: 700; color: #ccc; margin-bottom: 4px; transition: all 0.15s; }
 .menu-item:active { background: #1a1a24; }
 .menu-item .mi-icon { font-size: 20px; }
 
@@ -88,15 +80,15 @@ button:disabled { opacity: 0.4; }
 .game-card {
     background: #111116; border: 1px solid #1a1a1f; border-radius: 18px;
     padding: 22px 14px; text-align: center; cursor: pointer;
-    position: relative; overflow: hidden;
+    position: relative; overflow: hidden; transition: all 0.2s;
 }
-.game-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #6366f1, #8b5cf6); }
-.game-card:active { transform: scale(0.97); }
+.game-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #6366f1, #ec4899); }
+.game-card:active { transform: scale(0.96); border-color: #8b5cf6; }
 .game-card .gc-icon { font-size: 40px; margin-bottom: 10px; }
-.game-card .gc-name { font-size: 14px; font-weight: 900; color: #fff; }
+.game-card .gc-name { font-size: 14px; font-weight: 900; }
 .game-card .gc-desc { font-size: 11px; color: #666; margin-top: 4px; }
 
-/* СЕКЦИИ ИГР */
+/* ОБЩЕЕ */
 .topbar { padding: 18px 18px 12px; display: flex; align-items: center; gap: 12px; }
 .topbar .back { width: 40px; height: 40px; border-radius: 12px; background: #111116; border: 1px solid #1a1a1f; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; }
 .topbar .title { font-size: 16px; font-weight: 800; flex: 1; }
@@ -151,7 +143,7 @@ button:disabled { opacity: 0.4; }
 .plinko-slot.active { background: #6366f1; color: #fff; }
 
 /* РУЛЕТКА */
-.roulette-wheel { text-align: center; font-size: 80px; margin: 20px 0; }
+.roulette-wheel { text-align: center; font-size: 80px; margin: 20px 0; transition: transform 2s; }
 .roulette-result { text-align: center; font-size: 22px; font-weight: 800; margin: 10px 0; min-height: 30px; }
 
 /* ПРОФИЛЬ */
@@ -160,7 +152,6 @@ button:disabled { opacity: 0.4; }
 .prof-prefix { text-align: center; font-size: 12px; color: #a855f7; margin-top: 4px; font-weight: 700; }
 .prof-rank { text-align: center; font-size: 14px; margin-top: 8px; font-weight: 800; padding: 6px 16px; display: inline-block; border-radius: 12px; background: #1a1a24; }
 .prof-rank-wrap { text-align: center; margin-bottom: 16px; }
-
 .bal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 18px; margin-bottom: 18px; }
 .bal-card { background: #111116; border: 1px solid #1a1a1f; border-radius: 14px; padding: 14px; }
 .bal-card .lbl { font-size: 10px; color: #666; letter-spacing: 1px; font-weight: 700; }
@@ -168,7 +159,8 @@ button:disabled { opacity: 0.4; }
 .bal-card.blue .val { color: #3b82f6; }
 
 /* ТОП / ИГРОКИ */
-.user-row { background: #111116; border: 1px solid #1a1a1f; border-radius: 12px; padding: 12px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
+.user-row { background: #111116; border: 1px solid #1a1a1f; border-radius: 12px; padding: 12px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; transition: all 0.15s; }
+.user-row:active { background: #16161f; }
 .user-row .u-av { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #a855f7, #ec4899); display: flex; align-items: center; justify-content: center; font-size: 16px; }
 .user-row .u-info { flex: 1; }
 .user-row .u-name { font-size: 13px; font-weight: 800; }
@@ -186,6 +178,16 @@ button:disabled { opacity: 0.4; }
 /* ДУЭЛИ */
 .duel-card { background: #111116; border: 1px solid #a855f7; border-radius: 12px; padding: 12px; margin: 8px 0; }
 .duel-card .row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; }
+
+/* ЧАТ */
+.chat-box { padding: 0 18px 100px; max-height: calc(100vh - 200px); overflow-y: auto; }
+.chat-msg { background: linear-gradient(135deg, #14141a, #111116); border: 1px solid #1a1a1f; border-radius: 14px; padding: 12px; margin-bottom: 8px; }
+.chat-msg .cm-head { display: flex; justify-content: space-between; font-size: 12px; color: #a855f7; font-weight: 800; margin-bottom: 4px; }
+.chat-msg .cm-time { color: #666; font-weight: 500; font-size: 11px; }
+.chat-msg .cm-text { font-size: 14px; color: #fff; line-height: 1.5; word-break: break-word; }
+.chat-input-wrap { position: fixed; bottom: 12px; left: 12px; right: 12px; display: flex; gap: 8px; padding: 8px; background: #111116; border: 1px solid #1a1a1f; border-radius: 20px; z-index: 100; }
+.chat-input-wrap input { margin: 0; border: none; background: transparent; flex: 1; padding: 10px 14px; }
+.chat-input-wrap button { width: 48px; margin: 0; padding: 12px 0; border-radius: 14px; }
 
 /* АДМИН */
 .admin-wrap { padding: 0 14px; }
@@ -208,17 +210,16 @@ button:disabled { opacity: 0.4; }
 <div class="block-screen hidden" id="banScreen">
     <div class="bi">🚫</div>
     <div class="bt">ВЫ ЗАБАНЕНЫ</div>
-    <div class="btext">Аккаунт заблокирован.<br>Пишите @gift_</div>
+    <div class="btext">Аккаунт заблокирован.<br>Пишите @gift</div>
     <button onclick="location.reload()">Вернуться в меню</button>
 </div>
 <div class="block-screen frozen hidden" id="frozenScreen">
     <div class="bi">❄️</div>
     <div class="bt">АККАУНТ ЗАМОРОЖЕН</div>
-    <div class="btext">Аккаунт заморожен.<br>Пишите @gift_</div>
+    <div class="btext">Аккаунт заморожен.<br>Пишите @gift</div>
     <button style="background:#3b82f6;" onclick="location.reload()">Вернуться в меню</button>
 </div>
 
-<!-- ВХОД -->
 <div class="auth-bg" id="authPage">
     <div class="auth-box">
         <div class="auth-logo">W</div>
@@ -234,7 +235,6 @@ button:disabled { opacity: 0.4; }
     </div>
 </div>
 
-<!-- АДМИН -->
 <div id="adminPage" class="hidden">
     <div class="topbar"><div class="back" onclick="adminLogout()">←</div><div class="title">ADMIN</div></div>
     <div class="admin-wrap">
@@ -262,7 +262,6 @@ button:disabled { opacity: 0.4; }
     </div>
 </div>
 
-<!-- ГЛАВНОЕ -->
 <div id="mainPage" class="hidden">
     <div class="main-top">
         <div class="burger" onclick="toggleMenu()"><span></span><span></span><span></span></div>
@@ -285,12 +284,12 @@ button:disabled { opacity: 0.4; }
     <div class="status" id="mainStatus"></div>
 </div>
 
-<!-- МЕНЮ ПОЛОСКИ -->
 <div class="menu-overlay hidden" id="menuOverlay" onclick="if(event.target===this)toggleMenu()">
     <div class="menu-panel">
         <div class="menu-item" onclick="openPanel('top')"><span class="mi-icon">🏆</span> Топ игроков</div>
         <div class="menu-item" onclick="openPanel('users')"><span class="mi-icon">👥</span> Все игроки</div>
         <div class="menu-item" onclick="openPanel('ach')"><span class="mi-icon">⭐</span> Достижения</div>
+        <div class="menu-item" onclick="openPanel('chat')"><span class="mi-icon">💬</span> Общий чат</div>
         <div class="menu-item" onclick="openPanel('profile')"><span class="mi-icon">👤</span> Профиль</div>
         <div class="menu-item" onclick="openPanel('deposit')"><span class="mi-icon">💳</span> Пополнить</div>
         <div class="menu-item" onclick="openPanel('withdraw')"><span class="mi-icon">💸</span> Вывод</div>
@@ -299,7 +298,6 @@ button:disabled { opacity: 0.4; }
     </div>
 </div>
 
-<!-- ИГРЫ -->
 <div id="gamesPage" class="hidden">
     <div class="topbar"><div class="back" onclick="showPage('mainPage')">←</div><div class="title">ИГРЫ</div></div>
     <div class="games-grid">
@@ -313,7 +311,6 @@ button:disabled { opacity: 0.4; }
     </div>
 </div>
 
-<!-- ЭКРАНЫ ИГР -->
 <div id="gameWheel" class="hidden">
     <div class="topbar"><div class="back" onclick="showPage('gamesPage')">←</div><div class="title">Колесо</div></div>
     <div class="section">
@@ -395,7 +392,7 @@ button:disabled { opacity: 0.4; }
 <div id="gamePlinko" class="hidden">
     <div class="topbar"><div class="back" onclick="showPage('gamesPage')">←</div><div class="title">Плинко</div></div>
     <div class="section">
-        <div class="glass"><div class="stake-desc">Выбирай риск. Чем выше риск — тем больше множители.</div></div>
+        <div class="glass"><div class="stake-desc">Выбирай риск. Чем выше — тем больше множители.</div></div>
         <input type="number" id="plinkoBet" placeholder="Ставка" value="50">
         <select id="plinkoRisk" class="admin-input">
             <option value="low">Низкий риск</option>
@@ -421,13 +418,9 @@ button:disabled { opacity: 0.4; }
     </div>
 </div>
 
-<!-- ПАНЕЛИ ИЗ МЕНЮ -->
 <div id="panelTop" class="hidden">
     <div class="topbar"><div class="back" onclick="showPage('mainPage')">←</div><div class="title">Топ</div></div>
-    <div class="section">
-        <div class="glass"><div class="stake-desc">Рейтинг по звёздам</div></div>
-        <div id="topList"></div>
-    </div>
+    <div class="section"><div id="topList"></div></div>
 </div>
 
 <div id="panelUsers" class="hidden">
@@ -440,6 +433,15 @@ button:disabled { opacity: 0.4; }
     <div class="section">
         <div class="glass"><div class="stake-desc">Открыто: <b id="achCount">0</b></div></div>
         <div class="ach-grid" id="achGrid"></div>
+    </div>
+</div>
+
+<div id="panelChat" class="hidden">
+    <div class="topbar"><div class="back" onclick="showPage('mainPage')">←</div><div class="title">Общий чат</div></div>
+    <div class="chat-box" id="chatBox"></div>
+    <div class="chat-input-wrap">
+        <input type="text" id="chatInput" placeholder="Написать сообщение..." maxlength="300">
+        <button class="btn-primary" onclick="sendChat()">➤</button>
     </div>
 </div>
 
@@ -469,13 +471,13 @@ button:disabled { opacity: 0.4; }
 
 <div id="panelDeposit" class="hidden">
     <div class="topbar"><div class="back" onclick="showPage('mainPage')">←</div><div class="title">Пополнение</div></div>
-    <div class="section"><div class="glass" style="margin:0;"><div class="stake-desc">Напишите в Wintegramm: <b style="color:#a855f7;font-size:18px;">@gift_</b><br><br>Скажите число звёзд<br><br>1 звезда в Wintegramm = 10 здесь</div></div></div>
+    <div class="section"><div class="glass" style="margin:0;"><div class="stake-desc">Напишите в Wintegramm: <b style="color:#a855f7;font-size:18px;">@gift</b><br><br>Скажите число звёзд<br><br>1 звезда в Wintegramm = 10 здесь</div></div></div>
 </div>
 
 <div id="panelWithdraw" class="hidden">
     <div class="topbar"><div class="back" onclick="showPage('mainPage')">←</div><div class="title">Вывод</div></div>
     <div class="section">
-        <div class="glass" style="margin:0 0 12px;"><div class="stake-desc">1 грамм = 10 звёзд в Wintegramm.<br>Пишите: <b style="color:#a855f7;">@gift_</b></div></div>
+        <div class="glass" style="margin:0 0 12px;"><div class="stake-desc"><b>1 грамм = 1000 звёзд в Wintegramm</b><br><br>Пишите: <b style="color:#a855f7;font-size:16px;">@gift</b></div></div>
         <input type="number" id="withdrawGrams" placeholder="Грамм (мин 1)">
         <button class="btn-primary" onclick="withdraw()">Создать заявку</button>
         <div class="status" id="withdrawStatus"></div>
@@ -538,10 +540,11 @@ function openGame(g) {
 }
 function openPanel(p) {
     toggleMenu();
-    const map = { top: 'panelTop', users: 'panelUsers', ach: 'panelAch', profile: 'panelProfile', deposit: 'panelDeposit', withdraw: 'panelWithdraw', promo: 'panelPromo', exchange: 'panelExchange' };
+    const map = { top: 'panelTop', users: 'panelUsers', ach: 'panelAch', profile: 'panelProfile', deposit: 'panelDeposit', withdraw: 'panelWithdraw', promo: 'panelPromo', exchange: 'panelExchange', chat: 'panelChat' };
     showPage(map[p]);
     if (p === 'top') loadTop();
     if (p === 'users') loadUsers();
+    if (p === 'chat') loadChat();
 }
 function toggleMenu() {
     document.getElementById('menuOverlay').classList.toggle('hidden');
@@ -831,6 +834,33 @@ async function loadUsers() {
         '</div></div>'
     ).join('');
 }
+async function loadChat() {
+    const r = await api('/api/chat-get', { token });
+    if (!r.ok) return;
+    const box = document.getElementById('chatBox');
+    box.innerHTML = r.messages.length === 0 ? '<div class="status" style="padding:20px;">Пока пусто. Напиши первым!</div>' :
+        r.messages.map(m =>
+            '<div class="chat-msg">' +
+            '<div class="cm-head"><span>' + m.rank + ' ' + m.user + (m.prefix ? ' [' + m.prefix + ']' : '') + '</span>' +
+            '<span class="cm-time">' + new Date(m.date).toLocaleTimeString() + '</span></div>' +
+            '<div class="cm-text">' + m.text.replace(/</g, '&lt;') + '</div>' +
+            '</div>'
+        ).join('');
+    box.scrollTop = box.scrollHeight;
+}
+async function sendChat() {
+    const inp = document.getElementById('chatInput');
+    const text = inp.value.trim();
+    if (!text) return;
+    const r = await api('/api/chat-send', { token, text });
+    if (!r.ok) return st('mainStatus', '❌ ' + r.error, '#ef4444');
+    inp.value = '';
+    loadChat();
+}
+setInterval(() => {
+    const chatPanel = document.getElementById('panelChat');
+    if (chatPanel && !chatPanel.classList.contains('hidden')) loadChat();
+}, 5000);
 async function usePromo() {
     const code = document.getElementById('promoInput').value.trim();
     if (!code) return st('promoStatus', '❌ Введите промокод', '#ef4444');

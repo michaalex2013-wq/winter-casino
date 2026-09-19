@@ -13,7 +13,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
 function defaultDB() {
-    return { users: {}, promos: { 'free': { amount: 250, limit: 100, used: 0 } }, adminBalance: 0, withdrawals: [], diceDuels: {}, adminSessions: {}, failedLogins: [], mines: {} };
+    return { users: {}, promos: { 'free': { amount: 250, limit: 100, used: 0 } }, adminBalance: 0, withdrawals: [], diceDuels: {}, adminSessions: {}, failedLogins: [], mines: {}, chat: [] };
 }
 function loadDB() {
     if (!fs.existsSync(DB_FILE)) return defaultDB();
@@ -27,6 +27,7 @@ function loadDB() {
         if (!db.failedLogins) db.failedLogins = [];
         if (!db.promos) db.promos = { 'free': { amount: 250, limit: 100, used: 0 } };
         if (!db.mines) db.mines = {};
+        if (!db.chat) db.chat = [];
         Object.keys(db.promos).forEach(k => { if (typeof db.promos[k] === 'number') db.promos[k] = { amount: db.promos[k], limit: 999, used: 0 }; });
         return db;
     } catch (e) { return defaultDB(); }
@@ -408,10 +409,34 @@ app.post('/api/withdraw', (req, res) => {
     if (isNaN(g) || g < 1) return res.json({ ok: false, error: 'Мин 1 грамм' });
     if (user.grams < g) return res.json({ ok: false, error: 'Недостаточно' });
     user.grams -= g;
-    const tgStars = g * 10;
+    const tgStars = g * 1000;
     db.withdrawals.push({ username: user.username, grams: g, tgStars, date: Date.now(), status: 'pending' });
     saveDB(db);
-    res.json({ ok: true, grams: user.grams, message: 'Заявка на ' + g + ' грамм. @gift_' });
+    res.json({ ok: true, grams: user.grams, message: 'Заявка на ' + g + ' грамм = ' + tgStars + ' звёзд в Wintegramm. @gift' });
+});
+
+// ЧАТ
+app.post('/api/chat-get', (req, res) => {
+    const { token } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    if (!db.chat) db.chat = [];
+    res.json({ ok: true, messages: db.chat.slice(-50) });
+});
+app.post('/api/chat-send', (req, res) => {
+    const { token, text } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    if (user.banned || user.frozen) return res.json({ ok: false, error: 'Недоступно' });
+    const msg = String(text || '').trim().slice(0, 300);
+    if (!msg) return res.json({ ok: false, error: 'Пусто' });
+    if (!db.chat) db.chat = [];
+    db.chat.push({ user: user.username, text: msg, date: Date.now(), prefix: user.prefix || '', rank: getRank(user.stars).icon });
+    if (db.chat.length > 200) db.chat = db.chat.slice(-200);
+    saveDB(db);
+    res.json({ ok: true });
 });
 
 // АДМИН
