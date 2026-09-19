@@ -51,7 +51,6 @@ button { width:100%; padding:14px; margin:5px 0; border:none; border-radius:10px
 .ach-card .ad { font-size:9px; color:#666; margin-top:3px; }
 .timer { text-align:center; font-size:14px; color:#ff9900; font-weight:800; margin:10px 0; }
 .bonus-icon { text-align:center; font-size:48px; margin-bottom:8px; }
-input[type="number"] { -moz-appearance: textfield; }
 </style>
 </head>
 <body>
@@ -697,7 +696,6 @@ async function sendChat() {
 }
 setInterval(() => { if (!document.getElementById('pageChat').classList.contains('hidden')) loadChat(); }, 5000);
 
-// АДМИН
 async function adminRefresh() {
     const s = await api('/api/admin/stats', { password: adminPass });
     if (!s.ok) return st('adminStatus', '❌ ' + s.error, '#ef4444');
@@ -705,8 +703,7 @@ async function adminRefresh() {
         '<div class="admin-item"><span>👥 Игроков</span><b>' + s.usersCount + '</b></div>' +
         '<div class="admin-item"><span>⭐ Всего звёзд</span><b>' + s.totalStars + '</b></div>' +
         '<div class="admin-item"><span>💰 Комиссия</span><b>' + s.adminBalance + '</b></div>' +
-        '<div class="admin-item"><span>🚫 Бан</span><b>' + s.banned + '</b></div>' +
-        '<div class="admin-item"><span>❄️ Заморозка</span><b>' + s.frozen + '</b></div>';
+        '<div class="admin-item"><span>🚫 Бан</span><b>' + s.banned + '</b></div>';
     const u = await api('/api/admin/users', { password: adminPass });
     if (!u.ok) return;
     document.getElementById('adminUsersList').innerHTML = u.users.map(x =>
@@ -753,7 +750,6 @@ async function setPrefix(u) {
 }
 function adminLogout() { adminPass = ''; showPage('mainPage'); }
 
-// Секретный вход в админку — долгое нажатие на "Ранг" в профиле
 document.getElementById('profRank').addEventListener('dblclick', async () => {
     const p = prompt('Секретный код:');
     if (!p) return;
