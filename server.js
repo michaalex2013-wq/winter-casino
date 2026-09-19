@@ -900,4 +900,325 @@ app.post('/api/admin/action-logs', (req, res) => {
 });
 
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
-app.listen(PORT, '0.0.0.0', () => console.log('OK: ' + PORT));
+app.listen(PORT, '0.0.0.0', () => console.log('OK: ' + PORT));// ========== СОЦИАЛЬНОЕ ==========
+
+// ДРУЗЬЯ
+app.post('/api/friends-list', (req, res) => {
+    const { token } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    if (!user.friends) user.friends = [];
+    if (!user.friendRequests) user.friendRequests = [];
+    const friends = user.friends.map(f => {
+        const u = db.users[f];
+        if (!u) return null;
+        return { username: f, stars: u.stars, online: (Date.now() - (u.lastSeen || 0)) < 5 * 60 * 1000, status: u.status || 'online', prefix: u.prefix || '' };
+    }).filter(Boolean);
+    const requests = user.friendRequests.map(f => {
+        const u = db.users[f];
+        if (!u) return null;
+        return { username: f, stars: u.stars };
+    }).filter(Boolean);
+    res.json({ ok: true, friends, requests });
+});
+
+app.post('/api/friend-request', (req, res) => {
+    const { token, username } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    const target = db.users[username];
+    if (!target) return res.json({ ok: false, error: 'Игрок не найден' });
+    if (username === user.username) return res.json({ ok: false, error: 'Нельзя себя' });
+    if (!user.friends) user.friends = [];
+    if (user.friends.includes(username)) return res.json({ ok: false, error: 'Уже в друзьях' });
+    if (!target.friendRequests) target.friendRequests = [];
+    if (target.friendRequests.includes(user.username)) return res.json({ ok: false, error: 'Заявка уже отправлена' });
+    target.friendRequests.push(user.username);
+    saveDB(db);
+    res.json({ ok: true });
+});
+
+app.post('/api/friend-accept', (req, res) => {
+    const { token, username } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    if (!user.friendRequests) user.friendRequests = [];
+    if (!user.friendRequests.includes(username)) return res.json({ ok: false, error: 'Нет заявки' });
+    user.friendRequests = user.friendRequests.filter(u => u !== username);
+    if (!user.friends) user.friends = [];
+    if (!user.friends.includes(username)) user.friends.push(username);
+    const other = db.users[username];
+    if (other) {
+        if (!other.friends) other.friends = [];
+        if (!other.friends.includes(user.username)) other.friends.push(user.username);
+    }
+    saveDB(db);
+    res.json({ ok: true });
+});
+
+app.post('/api/friend-decline', (req, res) => {
+    const { token, username } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    if (!user.friendRequests) user.friendRequests = [];
+    user.friendRequests = user.friendRequests.filter(u => u !== username);
+    saveDB(db);
+    res.json({ ok: true });
+});
+
+app.post('/api/friend-remove', (req, res) => {
+    const { token, username } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    if (!user.friends) user.friends = [];
+    user.friends = user.friends.filter(u => u !== username);
+    const other = db.users[username];
+    if (other && other.friends) other.friends = other.friends.filter(u => u !== user.username);
+    saveDB(db);
+    res.json({ ok: true });
+});
+
+// ЛИЧНЫЕ СООБЩЕНИЯ
+app.post('/api/dm-list', (req, res) => {
+    const { token, withUser } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    if (!db.dms) db.dms = {};
+    const key1 = user.username + '|' + withUser;
+    const key2 = withUser + '|' + user.username;
+    const msgs = (db.dms[key1] || []).concat(db.dms[key2] || []).sort((a, b) => a.date - b.date).slice(-50);
+    res.json({ ok: true, messages: msgs });
+});
+
+app.post('/api/dm-send', (req, res) => {
+    const { token, to, text } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    if (user.banned || user.frozen) return res.json({ ok: false, error: 'Недоступно' });
+    const target = db.users[to];
+    if (!target) return res.json({ ok: false, error: 'Игрок не найден' });
+    const now = Date.now();
+    const last = chatCooldown['dm_' + user.username] || 0;
+    if (now - last < 2000) return res.json({ ok: false, error: 'Подождите 2 секунды' });
+    chatCooldown['dm_' + user.username] = now;
+    const msg = String(text || '').trim().slice(0, 500);
+    if (!msg) return res.json({ ok: false, error: 'Пусто' });
+    if (!db.dms) db.dms = {};
+    const key = user.username + '|' + to;
+    if (!db.dms[key]) db.dms[key] = [];
+    db.dms[key].push({ from: user.username, to, text: msg, date: now });
+    if (db.dms[key].length > 100) db.dms[key] = db.dms[key].slice(-100);
+    saveDB(db);
+    res.json({ ok: true });
+});
+
+// СТАТУСЫ
+app.post('/api/set-status', (req, res) => {
+    const { token, status } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    const allowed = ['online', 'away', 'dnd', 'offline'];
+    if (!allowed.includes(status)) return res.json({ ok: false, error: 'Неверный статус' });
+    user.status = status;
+    user.lastSeen = Date.now();
+    saveDB(db);
+    res.json({ ok: true });
+});
+
+app.post('/api/heartbeat', (req, res) => {
+    const { token } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false });
+    user.lastSeen = Date.now();
+    saveDB(db);
+    res.json({ ok: true });
+});
+
+// ЛЕНТА АКТИВНОСТИ
+app.post('/api/feed', (req, res) => {
+    const { token } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    if (!db.feed) db.feed = [];
+    res.json({ ok: true, feed: db.feed.slice(-30).reverse() });
+});
+
+function addFeed(db, type, user, text) {
+    if (!db.feed) db.feed = [];
+    db.feed.push({ type, user, text, date: Date.now() });
+    if (db.feed.length > 100) db.feed = db.feed.slice(-100);
+}
+
+// СВАДЬБЫ
+app.post('/api/marry-propose', (req, res) => {
+    const { token, username } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    const target = db.users[username];
+    if (!target) return res.json({ ok: false, error: 'Игрок не найден' });
+    if (username === user.username) return res.json({ ok: false, error: 'Нельзя себя' });
+    if (user.marriedTo) return res.json({ ok: false, error: 'Вы уже женаты' });
+    if (target.marriedTo) return res.json({ ok: false, error: 'Игрок уже женат' });
+    target.marryProposal = user.username;
+    saveDB(db);
+    addFeed(db, 'marry', user.username, 'предложил брак ' + username);
+    saveDB(db);
+    res.json({ ok: true });
+});
+
+app.post('/api/marry-accept', (req, res) => {
+    const { token } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    if (!user.marryProposal) return res.json({ ok: false, error: 'Нет предложений' });
+    const proposer = db.users[user.marryProposal];
+    if (!proposer) return res.json({ ok: false, error: 'Игрок удалён' });
+    if (proposer.marriedTo || user.marriedTo) return res.json({ ok: false, error: 'Кто-то уже женат' });
+    user.marriedTo = proposer.username;
+    proposer.marriedTo = user.username;
+    user.marryProposal = null;
+    saveDB(db);
+    addFeed(db, 'marry', user.username, 'женился на ' + proposer.username);
+    saveDB(db);
+    res.json({ ok: true });
+});
+
+app.post('/api/marry-decline', (req, res) => {
+    const { token } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    user.marryProposal = null;
+    saveDB(db);
+    res.json({ ok: true });
+});
+
+app.post('/api/marry-divorce', (req, res) => {
+    const { token } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    if (!user.marriedTo) return res.json({ ok: false, error: 'Вы не женаты' });
+    const partner = db.users[user.marriedTo];
+    if (partner) partner.marriedTo = null;
+    user.marriedTo = null;
+    saveDB(db);
+    res.json({ ok: true });
+});
+
+// КЛАНЫ
+app.post('/api/clan-create', (req, res) => {
+    const { token, name } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    if (user.clan) return res.json({ ok: false, error: 'Вы уже в клане' });
+    const cleanName = String(name || '').trim().slice(0, 20);
+    if (cleanName.length < 3) return res.json({ ok: false, error: 'Минимум 3 символа' });
+    if (user.stars < 10000) return res.json({ ok: false, error: 'Нужно 10000 звёзд' });
+    if (!db.clans) db.clans = {};
+    if (db.clans[cleanName]) return res.json({ ok: false, error: 'Имя занято' });
+    user.stars -= 10000;
+    db.clans[cleanName] = { name: cleanName, leader: user.username, members: [user.username], created: Date.now() };
+    user.clan = cleanName;
+    saveDB(db);
+    addFeed(db, 'clan', user.username, 'создал клан ' + cleanName);
+    saveDB(db);
+    res.json({ ok: true, clan: cleanName });
+});
+
+app.post('/api/clan-list', (req, res) => {
+    const { token } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    if (!db.clans) db.clans = {};
+    const clans = Object.values(db.clans).map(c => ({
+        name: c.name,
+        leader: c.leader,
+        membersCount: c.members.length,
+        totalStars: c.members.reduce((s, m) => s + (db.users[m]?.stars || 0), 0)
+    })).sort((a, b) => b.totalStars - a.totalStars);
+    res.json({ ok: true, clans });
+});
+
+app.post('/api/clan-join', (req, res) => {
+    const { token, name } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    if (user.clan) return res.json({ ok: false, error: 'Вы уже в клане' });
+    if (!db.clans || !db.clans[name]) return res.json({ ok: false, error: 'Клан не найден' });
+    if (db.clans[name].members.length >= 20) return res.json({ ok: false, error: 'Клан полон' });
+    db.clans[name].members.push(user.username);
+    user.clan = name;
+    saveDB(db);
+    res.json({ ok: true });
+});
+
+app.post('/api/clan-leave', (req, res) => {
+    const { token } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    if (!user.clan) return res.json({ ok: false, error: 'Вы не в клане' });
+    const clan = db.clans[user.clan];
+    if (clan) {
+        clan.members = clan.members.filter(m => m !== user.username);
+        if (clan.members.length === 0) delete db.clans[user.clan];
+        else if (clan.leader === user.username) clan.leader = clan.members[0];
+    }
+    user.clan = null;
+    saveDB(db);
+    res.json({ ok: true });
+});
+
+app.post('/api/clan-info', (req, res) => {
+    const { token } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    if (!user.clan) return res.json({ ok: true, clan: null });
+    const clan = db.clans[user.clan];
+    if (!clan) { user.clan = null; saveDB(db); return res.json({ ok: true, clan: null }); }
+    const members = clan.members.map(m => ({ username: m, stars: db.users[m]?.stars || 0, leader: m === clan.leader }));
+    res.json({ ok: true, clan: { name: clan.name, leader: clan.leader, members } });
+});
+
+// АВАТАРЫ И РАМКИ
+app.post('/api/set-avatar', (req, res) => {
+    const { token, avatar } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    // Только emoji из набора или короткая строка
+    const clean = String(avatar || '').slice(0, 10);
+    user.avatar = clean || '👤';
+    saveDB(db);
+    res.json({ ok: true });
+});
+
+app.post('/api/set-frame', (req, res) => {
+    const { token, frame } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    const allowed = ['none', 'gold', 'purple', 'pink', 'rainbow', 'fire'];
+    if (!allowed.includes(frame)) return res.json({ ok: false, error: 'Неверная рамка' });
+    user.frame = frame;
+    saveDB(db);
+    res.json({ ok: true });
+});
+
