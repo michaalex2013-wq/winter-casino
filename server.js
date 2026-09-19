@@ -13,16 +13,17 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
 function loadDB() {
-    if (!fs.existsSync(DB_FILE)) return { users: {}, promos: { 'free': 250 }, adminBalance: 0, withdrawals: [], adminSessions: {} };
+    if (!fs.existsSync(DB_FILE)) return { users: {}, promos: { 'free': 250 }, adminBalance: 0, withdrawals: [], duels: {}, adminSessions: {} };
     try {
         const db = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
         if (db.adminBalance === undefined) db.adminBalance = 0;
         if (!db.promos) db.promos = { 'free': 250 };
         if (!db.users) db.users = {};
         if (!db.withdrawals) db.withdrawals = [];
+        if (!db.duels) db.duels = {};
         if (!db.adminSessions) db.adminSessions = {};
         return db;
-    } catch (e) { return { users: {}, promos: { 'free': 250 }, adminBalance: 0, withdrawals: [], adminSessions: {} }; }
+    } catch (e) { return { users: {}, promos: { 'free': 250 }, adminBalance: 0, withdrawals: [], duels: {}, adminSessions: {} }; }
 }
 function saveDB(db) { try { fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2)); } catch (e) {} }
 function genToken() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
@@ -47,7 +48,7 @@ app.post('/api/login', (req, res) => {
     const db = loadDB();
     const u = db.users[username];
     if (!u) return res.json({ ok: false, error: 'Нет такого игрока' });
-    if (u.banned) return res.json({ ok: false, error: 'Вы забанены' });
+    if (u.banned) return res.json({ ok: false, error: 'BANNED', banned: true });
     if (u.password !== password) return res.json({ ok: false, error: 'Неверный пароль' });
     u.token = genToken();
     saveDB(db);
@@ -59,7 +60,7 @@ app.post('/api/profile', (req, res) => {
     const db = loadDB();
     const user = findUser(db, token);
     if (!user) return res.json({ ok: false, error: 'Не авторизован' });
-    if (user.banned) return res.json({ ok: false, error: 'Вы забанены' });
+    if (user.banned) return res.json({ ok: false, error: 'BANNED', banned: true });
     if (user.grams === undefined) user.grams = 0;
     const now = Date.now();
     const left = Math.max(0, 24 * 60 * 60 * 1000 - (now - user.lastWheel));
@@ -71,6 +72,7 @@ app.post('/api/wheel', (req, res) => {
     const db = loadDB();
     const user = findUser(db, token);
     if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    if (user.banned) return res.json({ ok: false, error: 'BANNED', banned: true });
     const now = Date.now(), DAY = 24 * 60 * 60 * 1000;
     if (now - user.lastWheel < DAY) return res.json({ ok: false, error: 'Подождите' });
     const rand = Math.random() * 100;
@@ -90,6 +92,7 @@ app.post('/api/crash', (req, res) => {
     const db = loadDB();
     const user = findUser(db, token);
     if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    if (user.banned) return res.json({ ok: false, error: 'BANNED', banned: true });
     const b = parseInt(bet);
     const t = parseFloat(target);
     if (b <= 0 || user.stars < b) return res.json({ ok: false, error: 'Мало звёзд' });
@@ -109,11 +112,12 @@ app.post('/api/crash', (req, res) => {
     res.json({ ok: true, win: false, mult: t, stars: user.stars });
 });
 
-app.post('/api/dice', (req, res) => {
+app.post('/api/dice-bot', (req, res) => {
     const { token, bet, mode } = req.body;
     const db = loadDB();
     const user = findUser(db, token);
     if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    if (user.banned) return res.json({ ok: false, error: 'BANNED', banned: true });
     const b = parseInt(bet);
     if (b <= 0 || user.stars < b) return res.json({ ok: false, error: 'Мало звёзд' });
     const d1 = Math.floor(Math.random() * 6) + 1;
@@ -134,6 +138,69 @@ app.post('/api/dice', (req, res) => {
     user.stars -= b;
     saveDB(db);
     res.json({ ok: true, d1, d2, sum, win: false, stars: user.stars });
+});
+
+// ДУЭЛИ МЕЖДУ ИГРОКАМИ
+app.post('/api/duel-create', (req, res) => {
+    const { token, bet, opponent } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    if (user.banned) return res.json({ ok: false, error: 'BANNED', banned: true });
+    const b = parseInt(bet);
+    if (b <= 0 || user.stars < b) return res.json({ ok: false, error: 'Мало звёзд' });
+    const opp = db.users[opponent];
+    if (!opp) return res.json({ ok: false, error: 'Игрок не найден' });
+    if (opp.banned) return res.json({ ok: false, error: 'Соперник забанен' });
+    if (opp.stars < b) return res.json({ ok: false, error: 'У соперника мало звёзд' });
+    if (opponent === user.username) return res.json({ ok: false, error: 'Нельзя с самим собой' });
+    const duelId = genToken();
+    db.duels[duelId] = { challenger: user.username, opponent, bet: b, created: Date.now() };
+    saveDB(db);
+    res.json({ ok: true, duelId });
+});
+
+app.post('/api/duel-list', (req, res) => {
+    const { token } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    const myDuels = Object.entries(db.duels).filter(([id, d]) => d.opponent === user.username).map(([id, d]) => ({ id, ...d }));
+    res.json({ ok: true, duels: myDuels });
+});
+
+app.post('/api/duel-accept', (req, res) => {
+    const { token, duelId } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    const duel = db.duels[duelId];
+    if (!duel) return res.json({ ok: false, error: 'Вызов не найден' });
+    if (duel.opponent !== user.username) return res.json({ ok: false, error: 'Это не ваш вызов' });
+    const challenger = db.users[duel.challenger];
+    const opponent = db.users[duel.opponent];
+    if (challenger.stars < duel.bet || opponent.stars < duel.bet) {
+        delete db.duels[duelId];
+        saveDB(db);
+        return res.json({ ok: false, error: 'У кого-то мало звёзд' });
+    }
+    const d1 = Math.floor(Math.random() * 11) + 2;
+    const d2 = Math.floor(Math.random() * 11) + 2;
+    let result, winner, loser;
+    if (d1 > d2) { winner = opponent; loser = challenger; result = 'win'; }
+    else if (d1 < d2) { winner = challenger; loser = opponent; result = 'lose'; }
+    else { result = 'draw'; }
+    let commission = 0;
+    if (winner) {
+        const prize = Math.floor(duel.bet * 1.5);
+        commission = Math.floor(prize * 0.05);
+        winner.stars += prize - commission;
+        loser.stars -= duel.bet;
+        db.adminBalance += commission;
+    }
+    delete db.duels[duelId];
+    saveDB(db);
+    res.json({ ok: true, d1, d2, result, stars: user.stars, commission, challenger: duel.challenger, opponent: duel.opponent });
 });
 
 app.post('/api/promo', (req, res) => {
@@ -168,7 +235,6 @@ app.post('/api/exchange', (req, res) => {
     res.json({ ok: true, stars: user.stars, grams: user.grams, exchanged: grams });
 });
 
-// ВЫВОД — заявка сохраняется в общий список для админа
 app.post('/api/withdraw', (req, res) => {
     const { token, grams } = req.body;
     const db = loadDB();
@@ -183,13 +249,11 @@ app.post('/api/withdraw', (req, res) => {
     const wr = { username: user.username, grams: g, tgStars, date: Date.now(), status: 'pending' };
     db.withdrawals.push(wr);
     saveDB(db);
-    res.json({ ok: true, grams: user.grams, message: 'Заявка на ' + g + ' грамм (' + tgStars + ' звёзд). Напишите @gift' });
+    res.json({ ok: true, grams: user.grams, message: 'Заявка на ' + g + ' грамм (' + tgStars + ' звёзд). Напишите @gift_' });
 });
 
-// АДМИН
 app.post('/api/admin/login', (req, res) => {
     if (req.body.password !== ADMIN_PASSWORD) return res.json({ ok: false, error: 'Неверный пароль' });
-    // Регистрируем сессию админа
     const db = loadDB();
     const ip = req.ip || 'unknown';
     const adminId = 'admin_' + genToken();
@@ -198,7 +262,6 @@ app.post('/api/admin/login', (req, res) => {
     res.json({ ok: true, adminId });
 });
 
-// Список активных админов (кто в течение 5 минут заходил)
 app.post('/api/admin/online', (req, res) => {
     if (req.body.password !== ADMIN_PASSWORD) return res.json({ ok: false, error: 'Нет доступа' });
     const db = loadDB();
@@ -222,7 +285,6 @@ app.post('/api/admin/users', (req, res) => {
     res.json({ ok: true, users: Object.values(db.users).map(u => ({ username: u.username, stars: u.stars, grams: u.grams || 0, banned: u.banned })) });
 });
 
-// Список всех заявок на вывод
 app.post('/api/admin/withdrawals', (req, res) => {
     if (req.body.password !== ADMIN_PASSWORD) return res.json({ ok: false, error: 'Нет доступа' });
     const db = loadDB();
