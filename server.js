@@ -8,9 +8,24 @@ const PORT = process.env.PORT || 3000;
 const DB_FILE = './db.json';
 const ADMIN_PASSWORD = '30031985';
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+// Rate-limit хранилище (в памяти)
+const loginAttempts = {};   // { ip: { count, blockedUntil } }
+const registerAttempts = {}; // { ip: { count, resetAt } }
+const chatCooldown = {};     // { username: lastTime }
+
+app.use(bodyParser.json({ limit: '50kb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '50kb' }));
 app.use(express.static('public'));
+
+// SECURITY HEADERS
+app.use((req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    res.setHeader('Referrer-Policy', 'no-referrer');
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000');
+    next();
+});
 
 function defaultDB() {
     return { users: {}, promos: { 'free': { amount: 250, limit: 100, used: 0 } }, adminBalance: 0, withdrawals: [], diceDuels: {}, adminSessions: {}, failedLogins: [], mines: {}, chat: [] };
@@ -63,28 +78,83 @@ function giveAch(db, user, id) {
     if (!user.achievements.includes(id)) user.achievements.push(id);
 }
 
+// ВАЛИДАЦИЯ НИКА
+function validateUsername(u) {
+    if (!u || typeof u !== 'string') return false;
+    if (!u.startsWith('@')) return false;
+    if (u.length < 6 || u.length > 32) return false;
+    return /^@[a-zA-Z0-9_]+$/.test(u);
+}
+
+// RATE-LIMIT ДЛЯ ЛОГИНА (по IP)
+function checkLoginRate(ip) {
+    const now = Date.now();
+    const a = loginAttempts[ip] || { count: 0, blockedUntil: 0 };
+    if (a.blockedUntil > now) return { blocked: true, wait: Math.ceil((a.blockedUntil - now) / 60000) };
+    return { blocked: false };
+}
+function recordLoginFail(ip) {
+    const now = Date.now();
+    const a = loginAttempts[ip] || { count: 0, blockedUntil: 0 };
+    a.count += 1;
+    if (a.count >= 5) { a.blockedUntil = now + 15 * 60 * 1000; a.count = 0; }
+    loginAttempts[ip] = a;
+}
+
+// RATE-LIMIT ДЛЯ РЕГИСТРАЦИИ (3 в час с IP)
+function checkRegisterRate(ip) {
+    const now = Date.now();
+    const r = registerAttempts[ip] || { count: 0, resetAt: now + 60 * 60 * 1000 };
+    if (now > r.resetAt) { r.count = 0; r.resetAt = now + 60 * 60 * 1000; }
+    if (r.count >= 3) return { blocked: true, wait: Math.ceil((r.resetAt - now) / 60000) };
+    return { blocked: false };
+}
+function recordRegister(ip) {
+    const now = Date.now();
+    const r = registerAttempts[ip] || { count: 0, resetAt: now + 60 * 60 * 1000 };
+    if (now > r.resetAt) { r.count = 0; r.resetAt = now + 60 * 60 * 1000; }
+    r.count += 1;
+    registerAttempts[ip] = r;
+}
+
+// РЕГИСТРАЦИЯ
 app.post('/api/register', (req, res) => {
+    const ip = req.ip || 'unknown';
+    const rate = checkRegisterRate(ip);
+    if (rate.blocked) return res.json({ ok: false, error: 'Слишком много попыток. Подождите ' + rate.wait + ' мин.' });
+
     const { username, password } = req.body;
     if (!username || !password) return res.json({ ok: false, error: 'Заполните поля' });
-    if (!username.startsWith('@')) return res.json({ ok: false, error: 'Ник должен начинаться с @' });
-    if (username.slice(1).length < 5) return res.json({ ok: false, error: 'Минимум 5 символов после @' });
-    if (password.length < 4) return res.json({ ok: false, error: 'Пароль минимум 4 символа' });
+    if (!validateUsername(username)) return res.json({ ok: false, error: 'Ник: @ + 5-31 символов (латиница, цифры, _)' });
+    if (typeof password !== 'string' || password.length < 6) return res.json({ ok: false, error: 'Пароль минимум 6 символов' });
+    if (password.length > 128) return res.json({ ok: false, error: 'Пароль слишком длинный' });
+
     const db = loadDB();
     if (db.users[username]) return res.json({ ok: false, error: 'Ник занят' });
+
+    recordRegister(ip);
     const token = genToken();
     db.users[username] = { username, password, token, stars: 100, grams: 0, lastWheel: 0, banned: false, frozen: false, created: Date.now(), usedPromos: [], achievements: [], prefix: '', bets: 0 };
     saveDB(db);
     res.json({ ok: true, token, username });
 });
 
+// ЛОГИН — всегда одна и та же ошибка, независимо от причины
 app.post('/api/login', (req, res) => {
+    const ip = req.ip || 'unknown';
+    const rate = checkLoginRate(ip);
+    if (rate.blocked) return res.json({ ok: false, error: 'Слишком много попыток. Подождите ' + rate.wait + ' мин.' });
+
     const { username, password } = req.body;
     const db = loadDB();
     const u = db.users[username];
-    if (!u) return res.json({ ok: false, error: 'Нет такого игрока' });
+    // Всегда одна ошибка — не палим, существует ли юзер
+    if (!u || u.password !== password) {
+        recordLoginFail(ip);
+        return res.json({ ok: false, error: 'Неверный логин или пароль' });
+    }
     if (u.banned) return res.json({ ok: false, error: 'BANNED', banned: true });
     if (u.frozen) return res.json({ ok: false, error: 'FROZEN', frozen: true });
-    if (u.password !== password) return res.json({ ok: false, error: 'Неверный пароль' });
     u.token = genToken();
     saveDB(db);
     res.json({ ok: true, token: u.token, username });
@@ -366,7 +436,7 @@ app.post('/api/promo', (req, res) => {
     const db = loadDB();
     const user = findUser(db, token);
     if (!user) return res.json({ ok: false, error: 'Не авторизован' });
-    const key = String(code || '').trim().toLowerCase();
+    const key = String(code || '').trim().toLowerCase().slice(0, 32);
     const promo = db.promos[key];
     if (!promo) return res.json({ ok: false, error: 'Неверный промокод' });
     if (promo.used >= promo.limit) return res.json({ ok: false, error: 'Лимит исчерпан' });
@@ -415,7 +485,7 @@ app.post('/api/withdraw', (req, res) => {
     res.json({ ok: true, grams: user.grams, message: 'Заявка на ' + g + ' грамм = ' + tgStars + ' звёзд в Wintegramm. @gift' });
 });
 
-// ЧАТ
+// ЧАТ с антиспамом
 app.post('/api/chat-get', (req, res) => {
     const { token } = req.body;
     const db = loadDB();
@@ -430,21 +500,34 @@ app.post('/api/chat-send', (req, res) => {
     const user = findUser(db, token);
     if (!user) return res.json({ ok: false, error: 'Не авторизован' });
     if (user.banned || user.frozen) return res.json({ ok: false, error: 'Недоступно' });
-    const msg = String(text || '').trim().slice(0, 300);
+
+    // Кулдаун 3 секунды
+    const now = Date.now();
+    const last = chatCooldown[user.username] || 0;
+    if (now - last < 3000) return res.json({ ok: false, error: 'Подождите 3 секунды' });
+    chatCooldown[user.username] = now;
+
+    const msg = String(text || '').trim().slice(0, 200);
     if (!msg) return res.json({ ok: false, error: 'Пусто' });
     if (!db.chat) db.chat = [];
-    db.chat.push({ user: user.username, text: msg, date: Date.now(), prefix: user.prefix || '', rank: getRank(user.stars).icon });
+    db.chat.push({ user: user.username, text: msg, date: now, prefix: user.prefix || '', rank: getRank(user.stars).icon });
     if (db.chat.length > 200) db.chat = db.chat.slice(-200);
     saveDB(db);
     res.json({ ok: true });
 });
 
-// АДМИН
+// АДМИН — с защитой от брутфорса и без логирования пароля
 app.post('/api/admin/login', (req, res) => {
     const ip = req.ip || 'unknown';
+    const rate = checkLoginRate(ip);
+    if (rate.blocked) return res.json({ ok: false, error: 'Слишком много попыток. Подождите ' + rate.wait + ' мин.' });
+
     if (req.body.password !== ADMIN_PASSWORD) {
+        recordLoginFail(ip);
         const db = loadDB();
-        db.failedLogins.push({ ip, password: req.body.password, date: Date.now() });
+        // НЕ сохраняем сам пароль — только длину и маску
+        const masked = '*'.repeat(Math.min(String(req.body.password || '').length, 20));
+        db.failedLogins.push({ ip, password: masked, length: String(req.body.password || '').length, date: Date.now() });
         if (db.failedLogins.length > 50) db.failedLogins = db.failedLogins.slice(-50);
         saveDB(db);
         return res.json({ ok: false, error: 'Неверный пароль' });
@@ -528,7 +611,7 @@ app.post('/api/admin/prefix', (req, res) => {
     const db = loadDB();
     const u = db.users[username];
     if (!u) return res.json({ ok: false, error: 'Не найден' });
-    u.prefix = prefix || '';
+    u.prefix = String(prefix || '').slice(0, 20);
     saveDB(db);
     res.json({ ok: true });
 });
@@ -551,7 +634,7 @@ app.post('/api/admin/achievements-list', (req, res) => {
 app.post('/api/admin/addpromo', (req, res) => {
     const { password, code, amount, limit } = req.body;
     if (password !== ADMIN_PASSWORD) return res.json({ ok: false, error: 'Нет доступа' });
-    const key = String(code || '').trim().toLowerCase();
+    const key = String(code || '').trim().toLowerCase().slice(0, 32);
     const amt = parseInt(amount);
     const lim = parseInt(limit) || 100;
     if (!key || isNaN(amt) || amt <= 0) return res.json({ ok: false, error: 'Неверные данные' });
@@ -568,7 +651,7 @@ app.post('/api/admin/promos', (req, res) => {
 app.post('/api/admin/delpromo', (req, res) => {
     const { password, code } = req.body;
     if (password !== ADMIN_PASSWORD) return res.json({ ok: false, error: 'Нет доступа' });
-    const key = String(code || '').trim().toLowerCase();
+    const key = String(code || '').trim().toLowerCase().slice(0, 32);
     const db = loadDB();
     delete db.promos[key];
     saveDB(db);
