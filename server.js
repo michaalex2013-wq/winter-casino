@@ -1,3 +1,249 @@
+// ========== ТУРНИРЫ И РЕЙТИНГИ ==========
+
+function startOfDay() {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d.getTime();
+}
+function startOfWeek() {
+    const d = new Date();
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Monday
+    d.setDate(diff);
+    d.setHours(0, 0, 0, 0);
+    return d.getTime();
+}
+function startOfMonth() {
+    const d = new Date();
+    d.setDate(1);
+    d.setHours(0, 0, 0, 0);
+    return d.getTime();
+}
+
+// При каждой игре записываем выигрыш в статистику
+function trackWin(db, username, amount, game, mult) {
+    if (!db.stats) db.stats = {};
+    if (!db.stats[username]) db.stats[username] = { totalWin: 0, totalBet: 0, maxMult: 0, gamesPlayed: 0, history: [] };
+    const s = db.stats[username];
+    s.totalWin += amount;
+    s.gamesPlayed++;
+    if (mult > s.maxMult) s.maxMult = mult;
+    s.history.push({ amount, game, mult, date: Date.now() });
+    if (s.history.length > 500) s.history = s.history.slice(-500);
+}
+
+// Хелпер: посчитать выигрыш за период
+function sumWinSince(history, since) {
+    return (history || []).filter(h => h.date >= since).reduce((s, h) => s + h.amount, 0);
+}
+
+app.post('/api/leaderboard', (req, res) => {
+    const { token, period } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    let since = 0;
+    if (period === 'day') since = startOfDay();
+    else if (period === 'week') since = startOfWeek();
+    else if (period === 'month') since = startOfMonth();
+
+    const list = Object.values(db.users).map(u => {
+        const s = db.stats?.[u.username] || { history: [], maxMult: 0 };
+        return {
+            username: u.username,
+            prefix: u.prefix || '',
+            totalWin: period === 'all' ? (s.totalWin || 0) : sumWinSince(s.history, since),
+            maxMult: s.maxMult || 0,
+            gamesPlayed: s.gamesPlayed || 0
+        };
+    }).sort((a, b) => b.totalWin - a.totalWin).slice(0, 20);
+
+    // Топ по крашу
+    const crashTop = Object.values(db.users).map(u => {
+        const s = db.stats?.[u.username] || { maxMult: 0 };
+        return { username: u.username, prefix: u.prefix || '', maxMult: s.maxMult || 0 };
+    }).sort((a, b) => b.maxMult - a.maxMult).slice(0, 10);
+
+    res.json({ ok: true, list, crashTop, me: user.username });
+});
+
+// ЗАЛ СЛАВЫ (всё время)
+app.post('/api/hall-of-fame', (req, res) => {
+    const { token } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    const list = Object.values(db.users).map(u => ({
+        username: u.username,
+        prefix: u.prefix || '',
+        stars: u.stars,
+        totalWin: (db.stats?.[u.username]?.totalWin || 0)
+    })).sort((a, b) => b.totalWin - a.totalWin).slice(0, 10);
+    res.json({ ok: true, list });
+});
+
+// ========== КВЕСТЫ ==========
+const DAILY_QUESTS = [
+    { id: 'play10', name: 'Сделать 10 ставок', target: 10, reward: 500 },
+    { id: 'win1000', name: 'Выиграть 1000 звёзд', target: 1000, reward: 300 },
+    { id: 'crash3', name: 'Выиграть в краше x3', target: 1, reward: 1000 },
+    { id: 'dice_play', name: 'Сыграть в кубики 5 раз', target: 5, reward: 250 },
+    { id: 'chat', name: 'Написать 3 сообщения в чат', target: 3, reward: 150 }
+];
+
+app.post('/api/quests-get', (req, res) => {
+    const { token } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    const today = startOfDay();
+    if (!user.quests || user.quests.date !== today) {
+        user.quests = { date: today, progress: {}, claimed: [] };
+        saveDB(db);
+    }
+    res.json({ ok: true, quests: DAILY_QUESTS, progress: user.quests.progress, claimed: user.quests.claimed });
+});
+
+app.post('/api/quests-claim', (req, res) => {
+    const { token, questId } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    const q = DAILY_QUESTS.find(x => x.id === questId);
+    if (!q) return res.json({ ok: false, error: 'Нет квеста' });
+    const today = startOfDay();
+    if (!user.quests || user.quests.date !== today) return res.json({ ok: false, error: 'Квесты сброшены' });
+    if (user.quests.claimed.includes(questId)) return res.json({ ok: false, error: 'Уже получено' });
+    const prog = user.quests.progress[questId] || 0;
+    if (prog < q.target) return res.json({ ok: false, error: 'Не выполнено' });
+    user.stars += q.reward;
+    user.quests.claimed.push(questId);
+    logTx(db, user.username, 'quest', q.reward, q.name);
+    saveDB(db);
+    res.json({ ok: true, reward: q.reward, stars: user.stars });
+});
+
+function questProgress(db, user, questId, amount) {
+    const today = startOfDay();
+    if (!user.quests || user.quests.date !== today) user.quests = { date: today, progress: {}, claimed: [] };
+    if (!user.quests.progress[questId]) user.quests.progress[questId] = 0;
+    user.quests.progress[questId] += amount;
+}
+
+// ========== БАТЛ-ПАСС ==========
+const BATTLEPASS_LEVELS = 30;
+const BATTLEPASS_XP_PER_LEVEL = 500;
+
+function bpAddXp(db, user, amount) {
+    if (!user.bp) user.bp = { xp: 0, level: 0, season: 1, claimed: [], premiumClaimed: [] };
+    user.bp.xp += amount;
+    const newLevel = Math.min(BATTLEPASS_LEVELS, Math.floor(user.bp.xp / BATTLEPASS_XP_PER_LEVEL));
+    if (newLevel > user.bp.level) user.bp.level = newLevel;
+}
+
+app.post('/api/bp-get', (req, res) => {
+    const { token } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    if (!user.bp) user.bp = { xp: 0, level: 0, season: 1, claimed: [], premiumClaimed: [] };
+    const rewards = [];
+    for (let i = 1; i <= BATTLEPASS_LEVELS; i++) {
+        rewards.push({
+            level: i,
+            free: { type: 'stars', amount: 100 * i },
+            premium: { type: 'stars', amount: 300 * i }
+        });
+    }
+    res.json({ ok: true, bp: user.bp, maxLevel: BATTLEPASS_LEVELS, xpPerLevel: BATTLEPASS_XP_PER_LEVEL, rewards });
+});
+
+app.post('/api/bp-claim', (req, res) => {
+    const { token, level, track } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    if (!user.bp) return res.json({ ok: false, error: 'Нет прогресса' });
+    if (level > user.bp.level) return res.json({ ok: false, error: 'Уровень не достигнут' });
+    const key = track === 'premium' ? 'premiumClaimed' : 'claimed';
+    if (track === 'premium' && !user.premium) return res.json({ ok: false, error: 'Нужен Premium' });
+    if (user.bp[key].includes(level)) return res.json({ ok: false, error: 'Уже получено' });
+    const amount = track === 'premium' ? 300 * level : 100 * level;
+    user.stars += amount;
+    user.bp[key].push(level);
+    logTx(db, user.username, 'battlepass', amount, track + ' уровень ' + level);
+    saveDB(db);
+    res.json({ ok: true, amount, stars: user.stars });
+});
+
+// ========== БИРЖА ==========
+// Пользователи могут выставлять звёзды/граммы на продажу друг другу
+app.post('/api/market-list', (req, res) => {
+    const { token } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    if (!db.market) db.market = [];
+    // убираем старые лоты (>24ч)
+    const now = Date.now();
+    db.market = db.market.filter(l => now - l.date < 24 * 60 * 60 * 1000 && !l.sold);
+    saveDB(db);
+    res.json({ ok: true, lots: db.market.slice().reverse() });
+});
+
+app.post('/api/market-sell', (req, res) => {
+    const { token, grams, price } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    if (user.banned || user.frozen) return res.json({ ok: false, error: 'Недоступно' });
+    const g = parseInt(grams);
+    const p = parseInt(price);
+    if (g < 1 || p < 1) return res.json({ ok: false, error: 'Неверные значения' });
+    if (user.grams < g) return res.json({ ok: false, error: 'Недостаточно граммов' });
+    if (!db.market) db.market = [];
+    user.grams -= g;
+    db.market.push({ id: genToken(), seller: user.username, grams: g, price: p, date: Date.now(), sold: false });
+    saveDB(db);
+    res.json({ ok: true, grams: user.grams });
+});
+
+app.post('/api/market-buy', (req, res) => {
+    const { token, lotId } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    if (user.banned || user.frozen) return res.json({ ok: false, error: 'Недоступно' });
+    if (!db.market) return res.json({ ok: false, error: 'Нет лотов' });
+    const lot = db.market.find(l => l.id === lotId);
+    if (!lot || lot.sold) return res.json({ ok: false, error: 'Лот недоступен' });
+    if (lot.seller === user.username) return res.json({ ok: false, error: 'Свой лот' });
+    if (user.stars < lot.price) return res.json({ ok: false, error: 'Мало звёзд' });
+    const seller = db.users[lot.seller];
+    if (!seller) return res.json({ ok: false, error: 'Продавец удалён' });
+    user.stars -= lot.price;
+    user.grams += lot.grams;
+    seller.stars += lot.price;
+    lot.sold = true;
+    logTx(db, user.username, 'market-buy', -lot.price, '+' + lot.grams + ' грамм');
+    logTx(db, seller.username, 'market-sell', lot.price, '-' + lot.grams + ' грамм');
+    saveDB(db);
+    res.json({ ok: true, stars: user.stars, grams: user.grams });
+});
+
+app.post('/api/market-cancel', (req, res) => {
+    const { token, lotId } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    const lot = (db.market || []).find(l => l.id === lotId && !l.sold);
+    if (!lot) return res.json({ ok: false, error: 'Лот не найден' });
+    if (lot.seller !== user.username) return res.json({ ok: false, error: 'Не ваш лот' });
+    user.grams += lot.grams;
+    lot.sold = true;
+    saveDB(db);
+    res.json({ ok: true, grams: user.grams });
+});
 const express = require('express');
 const bodyParser = require('body-parser');
 const fs = require('fs');
