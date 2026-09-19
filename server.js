@@ -9,9 +9,9 @@ const DB_FILE = './db.json';
 const ADMIN_PASSWORD = '30031985';
 
 // ========== ЗАЩИТА ОТ DDOS ==========
-const globalLimiter = {};     // общий лимит на IP
-const gameLimiter = {};       // лимит на игровые запросы
-const blacklist = {};         // заблокированные IP
+const globalLimiter = {};
+const gameLimiter = {};
+const blacklist = {};
 const loginAttempts = {};
 const registerAttempts = {};
 const chatCooldown = {};
@@ -20,42 +20,27 @@ function getIP(req) {
     return (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip || 'unknown';
 }
 
-// ГЛОБАЛЬНЫЙ RATE-LIMIT: 100 запросов в минуту, 300+ = блок на 10 мин
 app.use((req, res, next) => {
     const ip = getIP(req);
     const now = Date.now();
-
-    // Проверка чёрного списка
-    if (blacklist[ip] && blacklist[ip] > now) {
-        return res.status(429).json({ error: 'IP заблокирован' });
-    }
-
+    if (blacklist[ip] && blacklist[ip] > now) return res.status(429).json({ error: 'IP заблокирован' });
     if (!globalLimiter[ip]) globalLimiter[ip] = { count: 1, reset: now + 60000 };
     else {
         if (now > globalLimiter[ip].reset) globalLimiter[ip] = { count: 1, reset: now + 60000 };
         else globalLimiter[ip].count++;
     }
-
-    // Если больше 300 запросов в минуту — в бан на 10 минут
     if (globalLimiter[ip].count > 300) {
         blacklist[ip] = now + 10 * 60 * 1000;
         return res.status(429).json({ error: 'Слишком много запросов. Блок на 10 минут.' });
     }
-
-    // Если больше 100 — просто отказ
-    if (globalLimiter[ip].count > 100) {
-        return res.status(429).json({ error: 'Слишком много запросов. Подождите минуту.' });
-    }
-
+    if (globalLimiter[ip].count > 100) return res.status(429).json({ error: 'Слишком много запросов. Подождите минуту.' });
     next();
 });
 
-// ОГРАНИЧЕНИЕ РАЗМЕРА ТЕЛА ЗАПРОСА
 app.use(bodyParser.json({ limit: '10kb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '10kb' }));
 app.use(express.static('public'));
 
-// SECURITY HEADERS
 app.use((req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
@@ -65,7 +50,6 @@ app.use((req, res, next) => {
     next();
 });
 
-// ЛИМИТ НА ИГРОВЫЕ ЗАПРОСЫ: 30 в минуту
 function gameLimit(req, res, next) {
     const ip = getIP(req);
     const now = Date.now();
@@ -74,15 +58,25 @@ function gameLimit(req, res, next) {
         if (now > gameLimiter[ip].reset) gameLimiter[ip] = { count: 1, reset: now + 60000 };
         else gameLimiter[ip].count++;
     }
-    if (gameLimiter[ip].count > 30) {
-        return res.status(429).json({ error: 'Слишком много игр. Подождите.' });
-    }
+    if (gameLimiter[ip].count > 30) return res.status(429).json({ error: 'Слишком много игр. Подождите.' });
     next();
 }
 
 // ========== БАЗА ==========
 function defaultDB() {
-    return { users: {}, promos: { 'free': { amount: 250, limit: 100, used: 0 } }, adminBalance: 0, withdrawals: [], diceDuels: {}, adminSessions: {}, failedLogins: [], mines: {}, chat: [] };
+    return {
+        users: {},
+        promos: { 'free': { amount: 250, limit: 100, used: 0 } },
+        adminBalance: 0,
+        withdrawals: [],
+        diceDuels: {},
+        adminSessions: {},
+        failedLogins: [],
+        mines: {},
+        chat: [],
+        actionLogs: [],
+        transactions: []
+    };
 }
 function loadDB() {
     if (!fs.existsSync(DB_FILE)) return defaultDB();
@@ -97,6 +91,8 @@ function loadDB() {
         if (!db.promos) db.promos = { 'free': { amount: 250, limit: 100, used: 0 } };
         if (!db.mines) db.mines = {};
         if (!db.chat) db.chat = [];
+        if (!db.actionLogs) db.actionLogs = [];
+        if (!db.transactions) db.transactions = [];
         Object.keys(db.promos).forEach(k => { if (typeof db.promos[k] === 'number') db.promos[k] = { amount: db.promos[k], limit: 999, used: 0 }; });
         return db;
     } catch (e) { return defaultDB(); }
@@ -113,6 +109,15 @@ function getRank(stars) {
     if (stars >= 1000) return { name: 'Игрок', icon: '🎮', color: '#a855f7' };
     return { name: 'Новичок', icon: '🌱', color: '#666' };
 }
+function logAction(db, type, from, to, amount, extra) {
+    db.actionLogs.push({ type, from, to, amount, extra: extra || '', date: Date.now() });
+    if (db.actionLogs.length > 500) db.actionLogs = db.actionLogs.slice(-500);
+}
+function logTx(db, user, type, amount, comment) {
+    if (!db.transactions) db.transactions = [];
+    db.transactions.push({ user, type, amount, comment: comment || '', date: Date.now() });
+    if (db.transactions.length > 2000) db.transactions = db.transactions.slice(-2000);
+}
 
 const ACHIEVEMENTS = [
     { id: 'first_win', name: 'Первая победа', desc: 'Выиграть в любую игру', icon: '🏆' },
@@ -125,7 +130,9 @@ const ACHIEVEMENTS = [
     { id: 'gram_owner', name: 'Грамм', desc: 'Обменять звёзды на грамм', icon: '⚖️' },
     { id: 'promo_user', name: 'Промо-хантер', desc: 'Активировать промокод', icon: '🎁' },
     { id: 'mines_win', name: 'Сапёр', desc: 'Выиграть в Минах', icon: '💣' },
-    { id: 'plinko_win', name: 'Плинко', desc: 'Выиграть в Плинко x5+', icon: '🔻' }
+    { id: 'plinko_win', name: 'Плинко', desc: 'Выиграть в Плинко x5+', icon: '🔻' },
+    { id: 'daily_streak_7', name: 'Каждый день', desc: '7 дней подряд заходить', icon: '📅' },
+    { id: 'premium', name: 'Премиум', desc: 'Купить подписку Premium', icon: '⭐' }
 ];
 function giveAch(db, user, id) {
     if (!user.achievements) user.achievements = [];
@@ -165,6 +172,7 @@ function recordRegister(ip) {
     registerAttempts[ip] = r;
 }
 
+// ========== РЕГИСТРАЦИЯ / ЛОГИН ==========
 app.post('/api/register', (req, res) => {
     const ip = getIP(req);
     const rate = checkRegisterRate(ip);
@@ -178,7 +186,17 @@ app.post('/api/register', (req, res) => {
     if (db.users[username]) return res.json({ ok: false, error: 'Ник занят' });
     recordRegister(ip);
     const token = genToken();
-    db.users[username] = { username, password, token, stars: 100, grams: 0, lastWheel: 0, banned: false, frozen: false, created: Date.now(), usedPromos: [], achievements: [], prefix: '', bets: 0 };
+    db.users[username] = {
+        username, password, token, stars: 100, grams: 0, lastWheel: 0,
+        banned: false, frozen: false, created: Date.now(),
+        usedPromos: [], achievements: [], prefix: '', bets: 0,
+        // НОВОЕ:
+        lastDailyBonus: 0, dailyStreak: 0,
+        lastHourlyBonus: 0,
+        lastLottery: 0,
+        premium: false, premiumUntil: 0,
+        wheelCooldown: 0
+    };
     saveDB(db);
     res.json({ ok: true, token, username });
 });
@@ -210,8 +228,29 @@ app.post('/api/profile', (req, res) => {
     if (user.frozen) return res.json({ ok: false, error: 'FROZEN', frozen: true });
     if (user.grams === undefined) user.grams = 0;
     const now = Date.now();
-    const left = Math.max(0, 24 * 60 * 60 * 1000 - (now - user.lastWheel));
-    res.json({ ok: true, username: user.username, stars: user.stars, grams: user.grams, wheelLeft: left, achievements: user.achievements || [], allAchievements: ACHIEVEMENTS, prefix: user.prefix || '', rank: getRank(user.stars), bets: user.bets || 0 });
+    const DAY = 24 * 60 * 60 * 1000;
+    const HOUR = 60 * 60 * 1000;
+    const wheelLeft = Math.max(0, DAY - (now - user.lastWheel));
+    const dailyLeft = Math.max(0, DAY - (now - (user.lastDailyBonus || 0)));
+    const hourlyLeft = Math.max(0, HOUR - (now - (user.lastHourlyBonus || 0)));
+    const lotteryLeft = Math.max(0, DAY - (now - (user.lastLottery || 0)));
+    const premiumActive = user.premium && user.premiumUntil > now;
+
+    res.json({
+        ok: true,
+        username: user.username,
+        stars: user.stars,
+        grams: user.grams,
+        wheelLeft, dailyLeft, hourlyLeft, lotteryLeft,
+        dailyStreak: user.dailyStreak || 0,
+        premium: premiumActive,
+        premiumUntil: user.premiumUntil || 0,
+        achievements: user.achievements || [],
+        allAchievements: ACHIEVEMENTS,
+        prefix: user.prefix || '',
+        rank: getRank(user.stars),
+        bets: user.bets || 0
+    });
 });
 
 app.post('/api/users', (req, res) => {
@@ -227,6 +266,132 @@ app.post('/api/users', (req, res) => {
     res.json({ ok: true, users: list, me: me.username });
 });
 
+// ========== БОНУСЫ ==========
+app.post('/api/daily-bonus', (req, res) => {
+    const { token } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    const now = Date.now(), DAY = 24 * 60 * 60 * 1000;
+    const last = user.lastDailyBonus || 0;
+    if (now - last < DAY) return res.json({ ok: false, error: 'Бонус уже получен', left: DAY - (now - last) });
+
+    // Серия: если заходил вчера (24-48ч назад) — серия +1, иначе сброс
+    const diff = now - last;
+    if (last > 0 && diff < 2 * DAY) user.dailyStreak = (user.dailyStreak || 0) + 1;
+    else user.dailyStreak = 1;
+    if (user.dailyStreak > 30) user.dailyStreak = 30;
+
+    const base = 100;
+    const bonus = base + user.dailyStreak * 50;
+    const premiumBonus = user.premium && user.premiumUntil > now ? Math.floor(bonus * 2) : bonus;
+
+    user.stars += premiumBonus;
+    user.lastDailyBonus = now;
+    if (user.dailyStreak >= 7) giveAch(db, user, 'daily_streak_7');
+    logTx(db, user.username, 'daily', premiumBonus, 'Серия: ' + user.dailyStreak);
+    saveDB(db);
+    res.json({ ok: true, amount: premiumBonus, streak: user.dailyStreak, stars: user.stars });
+});
+
+app.post('/api/hourly-bonus', (req, res) => {
+    const { token } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    const now = Date.now(), HOUR = 60 * 60 * 1000;
+    const last = user.lastHourlyBonus || 0;
+    if (now - last < HOUR) return res.json({ ok: false, error: 'Бонус уже получен', left: HOUR - (now - last) });
+
+    let bonus = 25;
+    if (user.premium && user.premiumUntil > now) bonus *= 2;
+    user.stars += bonus;
+    user.lastHourlyBonus = now;
+    logTx(db, user.username, 'hourly', bonus, '');
+    saveDB(db);
+    res.json({ ok: true, amount: bonus, stars: user.stars });
+});
+
+app.post('/api/lottery-buy', (req, res) => {
+    const { token } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    const now = Date.now(), DAY = 24 * 60 * 60 * 1000;
+    const last = user.lastLottery || 0;
+    if (now - last < DAY) return res.json({ ok: false, error: 'Билет можно купить раз в сутки' });
+    if (user.stars < 500) return res.json({ ok: false, error: 'Нужно 500 звёзд' });
+
+    user.stars -= 500;
+    user.lastLottery = now;
+
+    // Шанс: 1% - 100000, 4% - 10000, 15% - 2000, 30% - 500, 50% - 100
+    const r = Math.random() * 100;
+    let prize;
+    if (r < 1) prize = 100000;
+    else if (r < 5) prize = 10000;
+    else if (r < 20) prize = 2000;
+    else if (r < 50) prize = 500;
+    else prize = 100;
+
+    user.stars += prize;
+    logTx(db, user.username, 'lottery', prize - 500, 'Билет лотереи');
+    saveDB(db);
+    res.json({ ok: true, prize, stars: user.stars });
+});
+
+// ========== ПРЕМИУМ ==========
+app.post('/api/premium-buy', (req, res) => {
+    const { token } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    const now = Date.now();
+    if (user.premium && user.premiumUntil > now) return res.json({ ok: false, error: 'Премиум уже активен' });
+    if (user.stars < 50000) return res.json({ ok: false, error: 'Нужно 50000 звёзд' });
+
+    user.stars -= 50000;
+    user.premium = true;
+    user.premiumUntil = now + 30 * 24 * 60 * 60 * 1000;
+    giveAch(db, user, 'premium');
+    logTx(db, user.username, 'premium', -50000, 'Премиум на 30 дней');
+    saveDB(db);
+    res.json({ ok: true, stars: user.stars, premiumUntil: user.premiumUntil });
+});
+
+// ========== УСКОРЕНИЕ КОЛЕСА ==========
+app.post('/api/skip-wheel-cooldown', (req, res) => {
+    const { token } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    const cost = 5000;
+    if (user.stars < cost) return res.json({ ok: false, error: 'Нужно 5000 звёзд' });
+    user.stars -= cost;
+    user.lastWheel = 0;
+    logTx(db, user.username, 'skip-wheel', -cost, '');
+    saveDB(db);
+    res.json({ ok: true, stars: user.stars });
+});
+
+// ========== ПОКУПКА ПРОМОКОДА ==========
+app.post('/api/buy-promo', (req, res) => {
+    const { token } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    const cost = 10000;
+    if (user.stars < cost) return res.json({ ok: false, error: 'Нужно 10000 звёзд' });
+
+    user.stars -= cost;
+    const code = 'BUY' + Math.random().toString(36).slice(2, 8).toUpperCase();
+    db.promos[code.toLowerCase()] = { amount: 15000, limit: 1, used: 0 };
+    logTx(db, user.username, 'buy-promo', -cost, code);
+    saveDB(db);
+    res.json({ ok: true, code, stars: user.stars });
+});
+
+// ========== ИГРЫ ==========
 app.post('/api/wheel', gameLimit, (req, res) => {
     const { token } = req.body;
     const db = loadDB();
@@ -241,6 +406,7 @@ app.post('/api/wheel', gameLimit, (req, res) => {
     else if (rand < 70) prize = 10;
     else if (rand < 90) prize = 50;
     else prize = 100;
+    if (user.premium && user.premiumUntil > now) prize *= 2;
     user.stars += prize;
     user.lastWheel = now;
     giveAch(db, user, 'wheel_spin');
@@ -366,19 +532,20 @@ app.post('/api/diceduel-accept', gameLimit, (req, res) => {
 });
 
 app.post('/api/mines-start', gameLimit, (req, res) => {
-    const { token, bet } = req.body;
+    const { token, bet, bombs } = req.body;
     const db = loadDB();
     const user = findUser(db, token);
     if (!user) return res.json({ ok: false, error: 'Не авторизован' });
     if (user.banned || user.frozen) return res.json({ ok: false, error: 'Недоступно' });
     const b = parseInt(bet);
+    const bombsCount = Math.min(Math.max(parseInt(bombs) || 3, 1), 24);
     if (b <= 0 || user.stars < b) return res.json({ ok: false, error: 'Мало звёзд' });
-    const bombs = new Set();
-    while (bombs.size < 3) bombs.add(Math.floor(Math.random() * 25));
-    db.mines[user.username] = { bet: b, bombs: [...bombs], opened: [], active: true };
+    const bombSet = new Set();
+    while (bombSet.size < bombsCount) bombSet.add(Math.floor(Math.random() * 25));
+    db.mines[user.username] = { bet: b, bombs: [...bombSet], opened: [], active: true, bombsCount };
     user.stars -= b;
     saveDB(db);
-    res.json({ ok: true });
+    res.json({ ok: true, bombsCount });
 });
 app.post('/api/mines-open', gameLimit, (req, res) => {
     const { token, cell } = req.body;
@@ -395,7 +562,8 @@ app.post('/api/mines-open', gameLimit, (req, res) => {
         return res.json({ ok: true, bomb: true, stars: user.stars });
     }
     game.opened.push(cell);
-    const mult = 1 + game.opened.length * 0.3;
+    const bombs = game.bombsCount || 3;
+    const mult = Math.pow(25 / (25 - bombs), game.opened.length);
     saveDB(db);
     res.json({ ok: true, bomb: false, opened: game.opened.length, multiplier: mult });
 });
@@ -406,7 +574,8 @@ app.post('/api/mines-cash', gameLimit, (req, res) => {
     if (!user) return res.json({ ok: false, error: 'Не авторизован' });
     const game = db.mines[user.username];
     if (!game || !game.active) return res.json({ ok: false, error: 'Нет игры' });
-    const mult = 1 + game.opened.length * 0.3;
+    const bombs = game.bombsCount || 3;
+    const mult = Math.pow(25 / (25 - bombs), game.opened.length);
     const win = Math.floor(game.bet * mult);
     user.stars += win;
     giveAch(db, user, 'mines_win');
@@ -472,6 +641,7 @@ app.post('/api/roulette', gameLimit, (req, res) => {
     res.json({ ok: true, result, win: false, stars: user.stars });
 });
 
+// ========== ПРОМО ==========
 app.post('/api/promo', (req, res) => {
     const { token, code } = req.body;
     const db = loadDB();
@@ -487,10 +657,12 @@ app.post('/api/promo', (req, res) => {
     user.usedPromos.push(key);
     promo.used = (promo.used || 0) + 1;
     giveAch(db, user, 'promo_user');
+    logTx(db, user.username, 'promo', promo.amount, key);
     saveDB(db);
     res.json({ ok: true, amount: promo.amount, stars: user.stars });
 });
 
+// ========== ОБМЕН / ВЫВОД ==========
 app.post('/api/exchange', (req, res) => {
     const { token, stars } = req.body;
     const db = loadDB();
@@ -505,6 +677,7 @@ app.post('/api/exchange', (req, res) => {
     user.stars -= amt;
     user.grams += grams;
     giveAch(db, user, 'gram_owner');
+    logTx(db, user.username, 'exchange', -amt, grams + ' грамм');
     saveDB(db);
     res.json({ ok: true, stars: user.stars, grams: user.grams, exchanged: grams });
 });
@@ -522,10 +695,22 @@ app.post('/api/withdraw', (req, res) => {
     user.grams -= g;
     const tgStars = g * 1000;
     db.withdrawals.push({ username: user.username, grams: g, tgStars, date: Date.now(), status: 'pending' });
+    logTx(db, user.username, 'withdraw', -g, g + ' грамм = ' + tgStars + ' звёзд');
     saveDB(db);
     res.json({ ok: true, grams: user.grams, message: 'Заявка на ' + g + ' грамм = ' + tgStars + ' звёзд в Wintegramm. @gift' });
 });
 
+// ========== ИСТОРИЯ ТРАНЗАКЦИЙ ==========
+app.post('/api/transactions', (req, res) => {
+    const { token } = req.body;
+    const db = loadDB();
+    const user = findUser(db, token);
+    if (!user) return res.json({ ok: false, error: 'Не авторизован' });
+    const list = (db.transactions || []).filter(t => t.user === user.username).slice(-50).reverse();
+    res.json({ ok: true, transactions: list });
+});
+
+// ========== ЧАТ ==========
 app.post('/api/chat-get', (req, res) => {
     const { token } = req.body;
     const db = loadDB();
@@ -553,6 +738,7 @@ app.post('/api/chat-send', (req, res) => {
     res.json({ ok: true });
 });
 
+// ========== АДМИН ==========
 app.post('/api/admin/login', (req, res) => {
     const ip = getIP(req);
     const rate = checkLoginRate(ip);
@@ -588,12 +774,20 @@ app.post('/api/admin/stats', (req, res) => {
     if (req.body.password !== ADMIN_PASSWORD) return res.json({ ok: false, error: 'Нет доступа' });
     const db = loadDB();
     const users = Object.values(db.users);
-    res.json({ ok: true, usersCount: users.length, totalStars: users.reduce((s, u) => s + u.stars, 0), adminBalance: db.adminBalance, banned: users.filter(u => u.banned).length, frozen: users.filter(u => u.frozen).length });
+    res.json({
+        ok: true,
+        usersCount: users.length,
+        totalStars: users.reduce((s, u) => s + u.stars, 0),
+        adminBalance: db.adminBalance,
+        banned: users.filter(u => u.banned).length,
+        frozen: users.filter(u => u.frozen).length,
+        premium: users.filter(u => u.premium && u.premiumUntil > Date.now()).length
+    });
 });
 app.post('/api/admin/users', (req, res) => {
     if (req.body.password !== ADMIN_PASSWORD) return res.json({ ok: false, error: 'Нет доступа' });
     const db = loadDB();
-    res.json({ ok: true, users: Object.values(db.users).map(u => ({ username: u.username, stars: u.stars, grams: u.grams || 0, banned: u.banned, frozen: u.frozen || false, prefix: u.prefix || '' })) });
+    res.json({ ok: true, users: Object.values(db.users).map(u => ({ username: u.username, stars: u.stars, grams: u.grams || 0, banned: u.banned, frozen: u.frozen || false, prefix: u.prefix || '', premium: u.premium && u.premiumUntil > Date.now() })) });
 });
 app.post('/api/admin/withdrawals', (req, res) => {
     if (req.body.password !== ADMIN_PASSWORD) return res.json({ ok: false, error: 'Нет доступа' });
@@ -607,6 +801,7 @@ app.post('/api/admin/give', (req, res) => {
     const u = db.users[username];
     if (!u) return res.json({ ok: false, error: 'Не найден' });
     u.stars += parseInt(amount) || 0;
+    logAction(db, 'give', 'admin', username, parseInt(amount) || 0);
     saveDB(db);
     res.json({ ok: true, stars: u.stars });
 });
@@ -617,6 +812,7 @@ app.post('/api/admin/ban', (req, res) => {
     const u = db.users[username];
     if (!u) return res.json({ ok: false, error: 'Не найден' });
     u.banned = !!ban;
+    logAction(db, ban ? 'ban' : 'unban', 'admin', username);
     saveDB(db);
     res.json({ ok: true });
 });
@@ -627,6 +823,7 @@ app.post('/api/admin/freeze', (req, res) => {
     const u = db.users[username];
     if (!u) return res.json({ ok: false, error: 'Не найден' });
     u.frozen = !!freeze;
+    logAction(db, freeze ? 'freeze' : 'unfreeze', 'admin', username);
     saveDB(db);
     res.json({ ok: true });
 });
@@ -636,6 +833,7 @@ app.post('/api/admin/delete', (req, res) => {
     const db = loadDB();
     if (!db.users[username]) return res.json({ ok: false, error: 'Не найден' });
     delete db.users[username];
+    logAction(db, 'delete', 'admin', username);
     saveDB(db);
     res.json({ ok: true });
 });
@@ -646,6 +844,7 @@ app.post('/api/admin/prefix', (req, res) => {
     const u = db.users[username];
     if (!u) return res.json({ ok: false, error: 'Не найден' });
     u.prefix = String(prefix || '').slice(0, 20);
+    logAction(db, 'prefix', 'admin', username, 0, u.prefix);
     saveDB(db);
     res.json({ ok: true });
 });
@@ -658,6 +857,7 @@ app.post('/api/admin/achievement', (req, res) => {
     if (!u.achievements) u.achievements = [];
     if (remove) u.achievements = u.achievements.filter(a => a !== achId);
     else if (!u.achievements.includes(achId)) u.achievements.push(achId);
+    logAction(db, 'achievement', 'admin', username, 0, achId);
     saveDB(db);
     res.json({ ok: true });
 });
@@ -674,6 +874,7 @@ app.post('/api/admin/addpromo', (req, res) => {
     if (!key || isNaN(amt) || amt <= 0) return res.json({ ok: false, error: 'Неверные данные' });
     const db = loadDB();
     db.promos[key] = { amount: amt, limit: lim, used: 0 };
+    logAction(db, 'addpromo', 'admin', '', amt, key);
     saveDB(db);
     res.json({ ok: true });
 });
@@ -688,8 +889,14 @@ app.post('/api/admin/delpromo', (req, res) => {
     const key = String(code || '').trim().toLowerCase().slice(0, 32);
     const db = loadDB();
     delete db.promos[key];
+    logAction(db, 'delpromo', 'admin', '', 0, key);
     saveDB(db);
     res.json({ ok: true });
+});
+app.post('/api/admin/action-logs', (req, res) => {
+    if (req.body.password !== ADMIN_PASSWORD) return res.json({ ok: false, error: 'Нет доступа' });
+    const db = loadDB();
+    res.json({ ok: true, logs: (db.actionLogs || []).slice(-100).reverse() });
 });
 
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
