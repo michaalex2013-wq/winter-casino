@@ -11,12 +11,14 @@ const ADMIN_PASSWORD = '50052916';
 const globalLimiter = {};
 const blacklist = {};
 const loginAttempts = {};
+const crashCooldown = {};       // { username: timestamp }
+const clickTracker = {};        // { username: [timestamps] }
+const autoclickFlags = {};      // { username: { count, lastFlag } }
 
 function getIP(req) {
     return (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip || 'unknown';
 }
 
-// === ЖЁСТКАЯ ЗАЩИТА ОТ DDOS ===
 app.use((req, res, next) => {
     const ip = getIP(req);
     const now = Date.now();
@@ -26,37 +28,28 @@ app.use((req, res, next) => {
         if (now > globalLimiter[ip].reset) globalLimiter[ip] = { count: 1, reset: now + 60000 };
         else globalLimiter[ip].count++;
     }
-    if (globalLimiter[ip].count > 400) { blacklist[ip] = now + 900000; return res.status(429).json({ error: 'Блок 15 мин' }); }
-    if (globalLimiter[ip].count > 150) return res.status(429).json({ error: 'Много запросов' });
+    if (globalLimiter[ip].count > 500) { blacklist[ip] = now + 900000; return res.status(429).json({ error: 'Блок 15 мин' }); }
+    if (globalLimiter[ip].count > 200) return res.status(429).json({ error: 'Много запросов' });
     next();
 });
 
 app.use(bodyParser.json({ limit: '1mb' }));
 
-// === ЗАГОЛОВКИ БЕЗОПАСНОСТИ ===
 app.use((req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('X-XSS-Protection', '1; mode=block');
     res.setHeader('Referrer-Policy', 'no-referrer');
     res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-    res.setHeader('Content-Security-Policy', "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https:; img-src * data: blob:;");
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
     res.setHeader('Server', 'Nyashka');
     next();
 });
 
-// Защита от hotlink
-app.use(express.static('public', {
-    setHeaders: (res) => {
-        res.setHeader('X-Robots-Tag', 'noindex, nofollow');
-    }
-}));
+app.use(express.static('public'));
 
 function defaultDB() {
-    return { users: {}, promos: { 'nyashka': { amount: 500, limit: 100, used: 0 } }, adminBalance: 0, withdrawals: [], diceDuels: {}, mines: {}, crashGames: {}, adminSessions: {}, failedLogins: [], actionLogs: [], transactions: [] };
+    return { users: {}, promos: { 'nyashka': { amount: 500, limit: 100, used: 0 } }, adminBalance: 0, withdrawals: [], diceDuels: {}, mines: {}, adminSessions: {}, failedLogins: [], actionLogs: [], transactions: [] };
 }
 function loadDB() {
     if (!fs.existsSync(DB_FILE)) return defaultDB();
@@ -79,6 +72,7 @@ function logTx(db, user, type, amount, comment) {
     if (db.transactions.length > 2000) db.transactions = db.transactions.slice(-2000);
 }
 
+// === РЕГИСТРАЦИЯ ===
 app.post('/api/register', (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) return res.json({ ok: false, error: 'Заполните поля' });
@@ -91,7 +85,8 @@ app.post('/api/register', (req, res) => {
     db.users[username] = {
         username, password, token, tokens: 1000, bets: 0, banned: false, frozen: false,
         prefix: '', avatar: '👤', usedPromos: [], friends: [],
-        dailyStreak: 0, lastDailyBonus: 0, created: Date.now(), lastSeen: Date.now()
+        dailyStreak: 0, lastDailyBonus: 0, created: Date.now(), lastSeen: Date.now(),
+        clicksToday: 0, lastClickReset: Date.now(), autoclickFlag: false
     };
     saveDB(db);
     res.json({ ok: true, token, username });
@@ -133,7 +128,8 @@ app.post('/api/profile', (req, res) => {
         ok: true, username: u.username, tokens: u.tokens, bets: u.bets || 0,
         prefix: u.prefix || '', avatar: u.avatar || '👤',
         dailyLeft: Math.max(0, 86400000 - (now - (u.lastDailyBonus || 0))),
-        dailyStreak: u.dailyStreak || 0
+        dailyStreak: u.dailyStreak || 0,
+        autoclickFlag: u.autoclickFlag || false
     });
 });
 
@@ -177,6 +173,7 @@ app.post('/api/set-nick', (req, res) => {
     res.json({ ok: true });
 });
 
+// === ЕЖЕДНЕВНЫЙ БОНУС ===
 app.post('/api/daily-bonus', (req, res) => {
     const { token } = req.body;
     const db = loadDB();
@@ -196,6 +193,7 @@ app.post('/api/daily-bonus', (req, res) => {
     res.json({ ok: true, amount: bonus, streak: u.dailyStreak, tokens: u.tokens });
 });
 
+// === ПРОМОКОДЫ ===
 app.post('/api/promo', (req, res) => {
     const { token, code } = req.body;
     const db = loadDB();
@@ -215,6 +213,71 @@ app.post('/api/promo', (req, res) => {
     res.json({ ok: true, amount: p.amount, tokens: u.tokens });
 });
 
+// === НЯШКА-КЛИКЕР (с защитой от автокликера) ===
+app.post('/api/nyashka-click', (req, res) => {
+    const { token } = req.body;
+    const db = loadDB();
+    const u = findUser(db, token);
+    if (!u) return res.json({ ok: false, error: 'Не авторизован' });
+    if (u.banned || u.frozen) return res.json({ ok: false, error: 'Недоступно' });
+    if (u.autoclickFlag) return res.json({ ok: false, error: 'Автокликер обнаружен. Обратитесь к @sigma' });
+
+    const now = Date.now();
+    const key = u.username;
+    if (!clickTracker[key]) clickTracker[key] = [];
+    const times = clickTracker[key];
+
+    // Чистим старше 1 секунды
+    while (times.length > 0 && now - times[0] > 1000) times.shift();
+    times.push(now);
+
+    // Защита: не более 30 кликов в секунду
+    if (times.length > 30) {
+        if (!autoclickFlags[key]) autoclickFlags[key] = { count: 1, firstSeen: now };
+        else autoclickFlags[key].count++;
+        if (autoclickFlags[key].count >= 3) {
+            u.autoclickFlag = true;
+            saveDB(db);
+            return res.json({ ok: false, error: 'АВТОКЛИКЕР ОБНАРУЖЕН. Аккаунт заблокирован.' });
+        }
+        return res.json({ ok: false, error: 'Слишком быстро! Максимум 30 в секунду.' });
+    }
+
+    // Дополнительно: интервалы между кликами не должны быть одинаковыми
+    // (у автокликера они регулярные). Если подряд 10 интервалов почти равны — флаг.
+    if (times.length >= 10) {
+        const intervals = [];
+        for (let i = 1; i < times.length; i++) intervals.push(times[i] - times[i-1]);
+        const avg = intervals.reduce((a,b) => a+b, 0) / intervals.length;
+        const variance = intervals.reduce((a,b) => a + Math.pow(b - avg, 2), 0) / intervals.length;
+        const std = Math.sqrt(variance);
+        if (std < 3 && avg < 60) {
+            if (!autoclickFlags[key]) autoclickFlags[key] = { count: 1, firstSeen: now };
+            else autoclickFlags[key].count++;
+            if (autoclickFlags[key].count >= 3) {
+                u.autoclickFlag = true;
+                saveDB(db);
+                return res.json({ ok: false, error: 'АВТОКЛИКЕР ОБНАРУЖЕН.' });
+            }
+            return res.json({ ok: false, error: 'Слишком регулярные клики. Играй честно!' });
+        }
+    }
+
+    // Лимит 2000 токенов в день с кликера
+    const dayMs = 86400000;
+    if (now - (u.lastClickReset || 0) > dayMs) {
+        u.clicksToday = 0;
+        u.lastClickReset = now;
+    }
+    if ((u.clicksToday || 0) >= 2000) return res.json({ ok: false, error: 'Дневной лимит 2000 кликов' });
+
+    u.clicksToday = (u.clicksToday || 0) + 1;
+    u.tokens += 1;
+    saveDB(db);
+    res.json({ ok: true, tokens: u.tokens, clicksToday: u.clicksToday });
+});
+
+// === КУБИКИ vs БОТ ===
 app.post('/api/dice-bot', (req, res) => {
     const { token, bet, mode } = req.body;
     const db = loadDB();
@@ -241,6 +304,7 @@ app.post('/api/dice-bot', (req, res) => {
     res.json({ ok: true, d1, d2, sum, win: false, tokens: u.tokens });
 });
 
+// === КУБИКИ PvP ===
 app.post('/api/dice-pvp-create', (req, res) => {
     const { token, bet, opponent } = req.body;
     const db = loadDB();
@@ -257,7 +321,6 @@ app.post('/api/dice-pvp-create', (req, res) => {
     saveDB(db);
     res.json({ ok: true, id });
 });
-
 app.post('/api/dice-pvp-list', (req, res) => {
     const { token } = req.body;
     const db = loadDB();
@@ -266,7 +329,6 @@ app.post('/api/dice-pvp-list', (req, res) => {
     const list = Object.entries(db.diceDuels).filter(([id, d]) => d.opponent === u.username).map(([id, d]) => ({ id, ...d }));
     res.json({ ok: true, duels: list });
 });
-
 app.post('/api/dice-pvp-accept', (req, res) => {
     const { token, id } = req.body;
     const db = loadDB();
@@ -289,6 +351,7 @@ app.post('/api/dice-pvp-accept', (req, res) => {
     res.json({ ok: true, c1, c2, o1, o2, chSum, opSum, result, tokens: u.tokens });
 });
 
+// === МИНЫ ===
 app.post('/api/mines-start', (req, res) => {
     const { token, bet, bombs } = req.body;
     const db = loadDB();
@@ -304,7 +367,6 @@ app.post('/api/mines-start', (req, res) => {
     saveDB(db);
     res.json({ ok: true, bombsCount, tokens: u.tokens });
 });
-
 app.post('/api/mines-open', (req, res) => {
     const { token, cell } = req.body;
     const db = loadDB();
@@ -324,7 +386,6 @@ app.post('/api/mines-open', (req, res) => {
     saveDB(db);
     res.json({ ok: true, bomb: false, opened: game.opened.length, multiplier: mult });
 });
-
 app.post('/api/mines-cash', (req, res) => {
     const { token } = req.body;
     const db = loadDB();
@@ -340,29 +401,60 @@ app.post('/api/mines-cash', (req, res) => {
     res.json({ ok: true, win, tokens: u.tokens });
 });
 
+// === КРАШ (исправленный, без дюпа) ===
+// Правила:
+// - кулдаун 3 секунды между играми
+// - цель от 1.1 до 3.0 (чтобы нельзя было ставить 10x)
+// - шанс выигрыша рассчитывается от цели с house edge 8%
+// - crashPoint генерируется заранее, но не возвращается игроку до конца
 app.post('/api/crash-start', (req, res) => {
     const { token, bet, target } = req.body;
     const db = loadDB();
     const u = findUser(db, token);
     if (!u) return res.json({ ok: false, error: 'Не авторизован' });
+    if (u.banned || u.frozen) return res.json({ ok: false, error: 'Недоступно' });
+
+    const now = Date.now();
+    const key = u.username;
+    if (crashCooldown[key] && now - crashCooldown[key] < 3000) {
+        return res.json({ ok: false, error: 'Подожди ' + Math.ceil((3000 - (now - crashCooldown[key])) / 1000) + ' сек.' });
+    }
+
     const b = parseInt(bet);
     const t = parseFloat(target);
     if (!b || b <= 0 || u.tokens < b) return res.json({ ok: false, error: 'Мало токенов' });
-    if (t < 1.1 || t > 10) return res.json({ ok: false, error: 'Цель 1.1-10' });
+    if (b > 100000) return res.json({ ok: false, error: 'Максимум 100000 за ставку' });
+    if (t < 1.1 || t > 3.0) return res.json({ ok: false, error: 'Множитель от 1.1 до 3.0' });
+
+    crashCooldown[key] = now;
     u.bets = (u.bets || 0) + 1;
-    const crashPoint = (Math.random() * 8 + 1.1).toFixed(2);
-    const win = parseFloat(crashPoint) >= t;
+
+    // Шанс выигрыша = (1 / target) * 0.92 (house edge 8%)
+    const winChance = (1 / t) * 0.92;
+    const win = Math.random() < winChance;
+    // Генерируем "краш поинт" — визуально для клиента
+    let crashPoint;
+    if (win) {
+        crashPoint = t + Math.random() * 2; // визуально больше цели
+    } else {
+        crashPoint = 1 + Math.random() * (t - 1); // упал ниже цели
+    }
+    crashPoint = parseFloat(crashPoint.toFixed(2));
+
     if (win) {
         const profit = Math.floor(b * (t - 1));
-        u.tokens += profit;
+        // доп. лимит: макс 500000 за одну игру
+        const limitedProfit = Math.min(profit, 500000);
+        u.tokens += limitedProfit;
         saveDB(db);
-        return res.json({ ok: true, crashPoint: parseFloat(crashPoint), target: t, win: true, profit, tokens: u.tokens });
+        return res.json({ ok: true, crashPoint, target: t, win: true, profit: limitedProfit, tokens: u.tokens });
     }
     u.tokens -= b;
     saveDB(db);
-    res.json({ ok: true, crashPoint: parseFloat(crashPoint), target: t, win: false, tokens: u.tokens });
+    res.json({ ok: true, crashPoint, target: t, win: false, tokens: u.tokens });
 });
 
+// === АДМИН ===
 app.post('/api/admin/login', (req, res) => {
     const ip = getIP(req);
     const now = Date.now();
@@ -405,7 +497,8 @@ app.post('/api/admin/stats', (req, res) => {
         onlineCount: users.filter(u => (now - (u.lastSeen || 0)) < 300000).length,
         totalTokens: users.reduce((s, u) => s + u.tokens, 0),
         banned: users.filter(u => u.banned).length,
-        frozen: users.filter(u => u.frozen).length
+        frozen: users.filter(u => u.frozen).length,
+        autoclickers: users.filter(u => u.autoclickFlag).length
     });
 });
 
@@ -415,7 +508,8 @@ app.post('/api/admin/users', (req, res) => {
     const now = Date.now();
     res.json({ ok: true, users: Object.values(db.users).map(u => ({
         username: u.username, tokens: u.tokens, banned: u.banned, frozen: u.frozen || false,
-        prefix: u.prefix || '', online: (now - (u.lastSeen || 0)) < 300000
+        prefix: u.prefix || '', online: (now - (u.lastSeen || 0)) < 300000,
+        autoclickFlag: u.autoclickFlag || false
     })) });
 });
 
@@ -474,6 +568,19 @@ app.post('/api/admin/prefix', (req, res) => {
     const u = db.users[username];
     if (!u) return res.json({ ok: false, error: 'Не найден' });
     u.prefix = String(prefix || '').slice(0, 20);
+    saveDB(db);
+    res.json({ ok: true });
+});
+
+app.post('/api/admin/unflag-autoclick', (req, res) => {
+    const { password, username } = req.body;
+    if (password !== ADMIN_PASSWORD) return res.json({ ok: false, error: 'Нет доступа' });
+    const db = loadDB();
+    const u = db.users[username];
+    if (!u) return res.json({ ok: false, error: 'Не найден' });
+    u.autoclickFlag = false;
+    if (autoclickFlags[username]) delete autoclickFlags[username];
+    if (clickTracker[username]) delete clickTracker[username];
     saveDB(db);
     res.json({ ok: true });
 });
