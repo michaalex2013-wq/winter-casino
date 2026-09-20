@@ -8,7 +8,6 @@ const PORT = process.env.PORT || 3000;
 const DB_FILE = './db.json';
 const ADMIN_PASSWORD = '50052916';
 
-// DDoS / rate-limit
 const globalLimiter = {};
 const blacklist = {};
 const loginAttempts = {};
@@ -17,6 +16,7 @@ function getIP(req) {
     return (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip || 'unknown';
 }
 
+// === ЖЁСТКАЯ ЗАЩИТА ОТ DDOS ===
 app.use((req, res, next) => {
     const ip = getIP(req);
     const now = Date.now();
@@ -26,26 +26,38 @@ app.use((req, res, next) => {
         if (now > globalLimiter[ip].reset) globalLimiter[ip] = { count: 1, reset: now + 60000 };
         else globalLimiter[ip].count++;
     }
-    if (globalLimiter[ip].count > 400) { blacklist[ip] = now + 600000; return res.status(429).json({ error: 'Блок 10 мин' }); }
+    if (globalLimiter[ip].count > 400) { blacklist[ip] = now + 900000; return res.status(429).json({ error: 'Блок 15 мин' }); }
     if (globalLimiter[ip].count > 150) return res.status(429).json({ error: 'Много запросов' });
     next();
 });
 
 app.use(bodyParser.json({ limit: '1mb' }));
-app.use(express.static('public'));
 
+// === ЗАГОЛОВКИ БЕЗОПАСНОСТИ ===
 app.use((req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('X-XSS-Protection', '1; mode=block');
     res.setHeader('Referrer-Policy', 'no-referrer');
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    res.setHeader('Content-Security-Policy', "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https:; img-src * data: blob:;");
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Server', 'Nyashka');
     next();
 });
+
+// Защита от hotlink
+app.use(express.static('public', {
+    setHeaders: (res) => {
+        res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+    }
+}));
 
 function defaultDB() {
     return { users: {}, promos: { 'nyashka': { amount: 500, limit: 100, used: 0 } }, adminBalance: 0, withdrawals: [], diceDuels: {}, mines: {}, crashGames: {}, adminSessions: {}, failedLogins: [], actionLogs: [], transactions: [] };
 }
-
 function loadDB() {
     if (!fs.existsSync(DB_FILE)) return defaultDB();
     try {
@@ -67,7 +79,6 @@ function logTx(db, user, type, amount, comment) {
     if (db.transactions.length > 2000) db.transactions = db.transactions.slice(-2000);
 }
 
-// ========== РЕГИСТРАЦИЯ ==========
 app.post('/api/register', (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) return res.json({ ok: false, error: 'Заполните поля' });
@@ -91,7 +102,6 @@ app.post('/api/login', (req, res) => {
     const now = Date.now();
     const a = loginAttempts[ip] || { count: 0, blockedUntil: 0 };
     if (a.blockedUntil > now) return res.json({ ok: false, error: 'Подождите ' + Math.ceil((a.blockedUntil - now) / 60000) + ' мин.' });
-
     const { username, password } = req.body;
     const db = loadDB();
     const u = db.users[username];
@@ -140,13 +150,12 @@ app.post('/api/users', (req, res) => {
     res.json({ ok: true, users: list, me: me.username });
 });
 
-// ========== ПРОФИЛЬ ==========
 app.post('/api/set-avatar', (req, res) => {
     const { token, avatar } = req.body;
     const db = loadDB();
     const u = findUser(db, token);
     if (!u) return res.json({ ok: false, error: 'Не авторизован' });
-    const a = String(avatar || '').slice(0, 100000);
+    const a = String(avatar || '').slice(0, 200000);
     if (!a) return res.json({ ok: false, error: 'Пусто' });
     u.avatar = a;
     saveDB(db);
@@ -168,7 +177,6 @@ app.post('/api/set-nick', (req, res) => {
     res.json({ ok: true });
 });
 
-// ========== ЕЖЕДНЕВНЫЙ БОНУС ==========
 app.post('/api/daily-bonus', (req, res) => {
     const { token } = req.body;
     const db = loadDB();
@@ -188,7 +196,6 @@ app.post('/api/daily-bonus', (req, res) => {
     res.json({ ok: true, amount: bonus, streak: u.dailyStreak, tokens: u.tokens });
 });
 
-// ========== ПРОМОКОДЫ ==========
 app.post('/api/promo', (req, res) => {
     const { token, code } = req.body;
     const db = loadDB();
@@ -208,7 +215,6 @@ app.post('/api/promo', (req, res) => {
     res.json({ ok: true, amount: p.amount, tokens: u.tokens });
 });
 
-// ========== КУБИКИ vs БОТ ==========
 app.post('/api/dice-bot', (req, res) => {
     const { token, bet, mode } = req.body;
     const db = loadDB();
@@ -235,7 +241,6 @@ app.post('/api/dice-bot', (req, res) => {
     res.json({ ok: true, d1, d2, sum, win: false, tokens: u.tokens });
 });
 
-// ========== КУБИКИ PvP ==========
 app.post('/api/dice-pvp-create', (req, res) => {
     const { token, bet, opponent } = req.body;
     const db = loadDB();
@@ -284,7 +289,6 @@ app.post('/api/dice-pvp-accept', (req, res) => {
     res.json({ ok: true, c1, c2, o1, o2, chSum, opSum, result, tokens: u.tokens });
 });
 
-// ========== МИНЫ ==========
 app.post('/api/mines-start', (req, res) => {
     const { token, bet, bombs } = req.body;
     const db = loadDB();
@@ -336,7 +340,6 @@ app.post('/api/mines-cash', (req, res) => {
     res.json({ ok: true, win, tokens: u.tokens });
 });
 
-// ========== КРАШ ==========
 app.post('/api/crash-start', (req, res) => {
     const { token, bet, target } = req.body;
     const db = loadDB();
@@ -360,7 +363,6 @@ app.post('/api/crash-start', (req, res) => {
     res.json({ ok: true, crashPoint: parseFloat(crashPoint), target: t, win: false, tokens: u.tokens });
 });
 
-// ========== АДМИН ==========
 app.post('/api/admin/login', (req, res) => {
     const ip = getIP(req);
     const now = Date.now();
